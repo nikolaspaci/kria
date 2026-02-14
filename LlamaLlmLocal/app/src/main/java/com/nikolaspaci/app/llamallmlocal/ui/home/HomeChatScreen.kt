@@ -82,7 +82,7 @@ fun HomeChatScreen(
                 selectedModelPath = selectedModelPath,
                 onModelSelected = {
                     selectedModelPath = it
-                    modelFileViewModel.saveModelPath(it,  ModelParameter(modelId = it))
+                    modelFileViewModel.saveModelPath(it)
                 },
                 modifier = Modifier.fillMaxWidth()
             )

@@ -1,5 +1,6 @@
 package com.nikolaspaci.app.llamallmlocal.data.database
 
+import androidx.paging.PagingSource
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
@@ -12,6 +13,9 @@ interface ChatDao {
 
     @Insert
     suspend fun insertConversation(conversation: Conversation): Long
+
+    @Insert
+    suspend fun insertChatMessage(message: ChatMessage): Long
 
     @Insert
     suspend fun insertMessage(message: ChatMessage)
@@ -29,6 +33,36 @@ interface ChatDao {
 
     @Delete
     suspend fun deleteConversation(conversation: Conversation)
+
+    // Paged queries
+
+    @Query("SELECT * FROM chat_messages WHERE conversationId = :conversationId ORDER BY timestamp ASC")
+    fun getPagedMessages(conversationId: Long): PagingSource<Int, ChatMessage>
+
+    @Query("SELECT COUNT(*) FROM chat_messages WHERE conversationId = :conversationId")
+    suspend fun getMessageCount(conversationId: Long): Int
+
+    @Query("""
+        SELECT * FROM conversations
+        ORDER BY lastUpdatedAt DESC
+    """)
+    fun getPagedConversations(): PagingSource<Int, Conversation>
+
+    @Query("""
+        UPDATE conversations
+        SET lastUpdatedAt = :timestamp,
+            lastMessagePreview = :preview,
+            messageCount = messageCount + 1
+        WHERE id = :conversationId
+    """)
+    suspend fun updateConversationMetadata(
+        conversationId: Long,
+        timestamp: Long,
+        preview: String
+    )
+
+    @Query("UPDATE conversations SET title = :title WHERE id = :conversationId")
+    suspend fun updateConversationTitle(conversationId: Long, title: String)
 }
 
 data class ConversationWithMessages(

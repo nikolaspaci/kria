@@ -1,8 +1,10 @@
 package com.nikolaspaci.app.llamallmlocal.ui
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationDrawerItem
@@ -10,26 +12,24 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import com.nikolaspaci.app.llamallmlocal.data.database.AppDatabase
-import com.nikolaspaci.app.llamallmlocal.data.repository.ChatRepository
 import com.nikolaspaci.app.llamallmlocal.data.repository.ModelParameterRepository
 import com.nikolaspaci.app.llamallmlocal.jni.LlamaJniService
 import com.nikolaspaci.app.llamallmlocal.ui.chat.ChatScreen
 import com.nikolaspaci.app.llamallmlocal.ui.common.HistoryMenuItems
 import com.nikolaspaci.app.llamallmlocal.ui.home.HomeChatScreen
 import com.nikolaspaci.app.llamallmlocal.ui.settings.SettingsScreen
-import com.nikolaspaci.app.llamallmlocal.viewmodel.ChatViewModelFactory
+import com.nikolaspaci.app.llamallmlocal.viewmodel.ChatViewModel
 import com.nikolaspaci.app.llamallmlocal.viewmodel.HistoryViewModel
 import com.nikolaspaci.app.llamallmlocal.viewmodel.ModelFileViewModel
 import com.nikolaspaci.app.llamallmlocal.viewmodel.ModelFileViewModelFactory
@@ -116,20 +116,11 @@ fun AppNavigation(factory: ViewModelFactory) {
                 arguments = listOf(
                     navArgument("conversationId") { type = NavType.LongType }
                 )
-            ) { backStackEntry ->
-                val conversationId = backStackEntry.arguments?.getLong("conversationId") ?: 0
-
-                val context = LocalContext.current
-                val db = AppDatabase.getDatabase(context)
-                val chatRepository = ChatRepository(db.chatDao())
-
-                val chatViewModelFactory = ChatViewModelFactory(
-                    chatRepository,
-                    conversationId
-                )
+            ) {
+                val chatViewModel: ChatViewModel = hiltViewModel()
 
                 ChatScreen(
-                    viewModel = viewModel(factory = chatViewModelFactory),
+                    viewModel = chatViewModel,
                     modelFileViewModel = modelFileViewModel,
                     onOpenDrawer = {
                         scope.launch { drawerState.open() }
@@ -158,4 +149,3 @@ fun AppNavigation(factory: ViewModelFactory) {
         }
     }
 }
-

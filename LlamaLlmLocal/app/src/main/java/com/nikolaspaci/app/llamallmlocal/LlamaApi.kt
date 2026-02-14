@@ -33,4 +33,10 @@ object LlamaApi {
     external fun predict(sessionPtr: Long, prompt: String, modelParameters: ModelParameter, callback: PredictCallback)
     external fun restoreHistory(sessionPtr: Long, messages: Array<Any>)
 
+    // Hardware info methods
+    external fun isVulkanAvailable(): Boolean
+    external fun getVulkanDeviceInfo(): String
+    external fun getRecommendedGpuLayers(): Int
+    external fun getVulkanVramBytes(): Long
+
 }

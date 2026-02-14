@@ -1,5 +1,8 @@
 package com.nikolaspaci.app.llamallmlocal.data.repository
 
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
 import com.nikolaspaci.app.llamallmlocal.data.database.ChatDao
 import com.nikolaspaci.app.llamallmlocal.data.database.Conversation
 import com.nikolaspaci.app.llamallmlocal.data.database.ChatMessage
@@ -30,5 +33,47 @@ class ChatRepository(private val chatDao: ChatDao) {
 
     suspend fun deleteConversation(conversation: Conversation) {
         chatDao.deleteConversation(conversation)
+    }
+
+    // Paged methods
+
+    fun getPagedMessages(conversationId: Long): Flow<PagingData<ChatMessage>> {
+        return Pager(
+            config = PagingConfig(
+                pageSize = 30,
+                enablePlaceholders = false,
+                prefetchDistance = 10,
+                initialLoadSize = 50
+            ),
+            pagingSourceFactory = { chatDao.getPagedMessages(conversationId) }
+        ).flow
+    }
+
+    fun getPagedConversations(): Flow<PagingData<Conversation>> {
+        return Pager(
+            config = PagingConfig(
+                pageSize = 20,
+                enablePlaceholders = false,
+                prefetchDistance = 5
+            ),
+            pagingSourceFactory = { chatDao.getPagedConversations() }
+        ).flow
+    }
+
+    suspend fun addMessageWithMetadata(message: ChatMessage): Long {
+        val messageId = chatDao.insertChatMessage(message)
+
+        val preview = message.message.take(100)
+        chatDao.updateConversationMetadata(
+            conversationId = message.conversationId,
+            timestamp = message.timestamp,
+            preview = preview
+        )
+
+        return messageId
+    }
+
+    suspend fun getMessageCount(conversationId: Long): Int {
+        return chatDao.getMessageCount(conversationId)
     }
 }

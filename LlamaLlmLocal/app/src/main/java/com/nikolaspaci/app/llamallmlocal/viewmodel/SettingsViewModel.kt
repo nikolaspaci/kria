@@ -1,52 +1,63 @@
 package com.nikolaspaci.app.llamallmlocal.viewmodel
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.nikolaspaci.app.llamallmlocal.data.database.ModelParameter
 import com.nikolaspaci.app.llamallmlocal.data.repository.ModelParameterRepository
+import com.nikolaspaci.app.llamallmlocal.data.validation.ParameterValidator
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class SettingsViewModel(
-    private val repository: ModelParameterRepository,
-    private val modelId: String
-) : ViewModel() {
-
-    private val _modelParameter = MutableStateFlow<ModelParameter?>(null)
-    val modelParameter = _modelParameter.asStateFlow()
-
-    init {
-        viewModelScope.launch {
-            _modelParameter.value = repository.getModelParameter(modelId) ?: ModelParameter(modelId)
-        }
-    }
-
-    fun updateAndSave(temperature: Float, topK: Int, topP: Float, minP: Float) {
-        val newParams = ModelParameter(
-            modelId = modelId,
-            temperature = temperature,
-            topK = topK,
-            topP = topP,
-            minP = minP
-        )
-        _modelParameter.value = newParams
-        viewModelScope.launch {
-            repository.insert(newParams)
-        }
-    }
+sealed class SettingsUiState {
+    object Loading : SettingsUiState()
+    data class Ready(
+        val parameters: ModelParameter,
+        val validationErrors: Map<String, String> = emptyMap()
+    ) : SettingsUiState()
+    object Saved : SettingsUiState()
+    data class Error(val message: String) : SettingsUiState()
 }
 
-class SettingsViewModelFactory(
-    private val repository: ModelParameterRepository,
-    private val modelId: String
-) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(SettingsViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
-            return SettingsViewModel(repository, modelId) as T
+@HiltViewModel
+class SettingsViewModel @Inject constructor(
+    private val repository: ModelParameterRepository
+) : ViewModel() {
+
+    private val _uiState = MutableStateFlow<SettingsUiState>(SettingsUiState.Loading)
+    val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
+
+    private var modelId: String = ""
+
+    fun loadParameters(modelId: String) {
+        this.modelId = modelId
+        viewModelScope.launch {
+            val params = repository.getModelParameter(modelId)
+                ?: ParameterValidator.getDefaultParameters(modelId)
+            _uiState.value = SettingsUiState.Ready(params)
         }
-        throw IllegalArgumentException("Unknown ViewModel class")
+    }
+
+    fun updateParameter(params: ModelParameter) {
+        val validation = ParameterValidator.validate(params)
+        _uiState.value = SettingsUiState.Ready(params, validation.errors)
+    }
+
+    fun saveParameters() {
+        val state = _uiState.value
+        if (state is SettingsUiState.Ready && state.validationErrors.isEmpty()) {
+            viewModelScope.launch {
+                repository.insert(state.parameters)
+                _uiState.value = SettingsUiState.Saved
+            }
+        }
+    }
+
+    fun resetToDefaults() {
+        val defaults = ParameterValidator.getDefaultParameters(modelId)
+        _uiState.value = SettingsUiState.Ready(defaults)
     }
 }

@@ -13,23 +13,32 @@ Java_com_nikolaspaci_app_llamallmlocal_LlamaApi_init(JNIEnv *env, jobject /* thi
     jfieldID topKField = env->GetFieldID(modelParamsClass, "topK", "I");
     jfieldID topPField = env->GetFieldID(modelParamsClass, "topP", "F");
     jfieldID minPField = env->GetFieldID(modelParamsClass, "minP", "F");
+    jfieldID contextSizeField = env->GetFieldID(modelParamsClass, "contextSize", "I");
+    jfieldID threadCountField = env->GetFieldID(modelParamsClass, "threadCount", "I");
+    jfieldID useGpuField = env->GetFieldID(modelParamsClass, "useGpu", "Z");
 
     // Get the values from the modelParameters object
     jfloat temperature = env->GetFloatField(modelParameters, temperatureField);
     jint topK = env->GetIntField(modelParameters, topKField);
     jfloat topP = env->GetFloatField(modelParameters, topPField);
     jfloat minP = env->GetFloatField(modelParameters, minPField);
+    jint contextSize = env->GetIntField(modelParameters, contextSizeField);
+    jint threadCount = env->GetIntField(modelParameters, threadCountField);
+    jboolean useGpu = env->GetBooleanField(modelParameters, useGpuField);
 
 
     // Prepare the parameters for the model and context.
     llama_model_params model_params = llama_model_default_params();
     model_params.use_mmap = true; // Use memory-mapped files for model loading.
     model_params.use_mlock = false;
+    if (useGpu) {
+        model_params.n_gpu_layers = 99;  // Toutes les couches sur GPU
+    }
     llama_context_params ctx_params = llama_context_default_params();
 
-    // You can adjust parameters here if needed. For example:
-    ctx_params.n_ctx = 2048; // Context size.
-    ctx_params.n_threads = 4; // Number of CPU threads to use.
+    ctx_params.n_ctx = contextSize;
+    ctx_params.n_threads = threadCount;
+    ctx_params.n_threads_batch = threadCount;
     ctx_params.no_perf = true; // Disable performance monitoring.
 
     // Create a session on the heap

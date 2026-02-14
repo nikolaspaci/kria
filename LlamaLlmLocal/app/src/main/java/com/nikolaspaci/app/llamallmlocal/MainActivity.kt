@@ -15,7 +15,9 @@ import com.nikolaspaci.app.llamallmlocal.ui.theme.LlamaLLmLocalTheme
 import com.nikolaspaci.app.llamallmlocal.viewmodel.ViewModelFactory
  
 import com.nikolaspaci.app.llamallmlocal.jni.LlamaJniService
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

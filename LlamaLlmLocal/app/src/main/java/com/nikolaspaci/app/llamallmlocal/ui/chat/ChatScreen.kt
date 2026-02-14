@@ -7,19 +7,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.nikolaspaci.app.llamallmlocal.ui.common.AppTopAppBar
@@ -38,11 +33,21 @@ fun ChatScreen(
     onNavigateToSettings: (String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val conversation by viewModel.conversation.collectAsState()
-    var selectedModelPath by remember(conversation) {
-        mutableStateOf(conversation?.modelPath ?: "")
+    var selectedModelPath by remember { mutableStateOf("") }
+
+    // Update selectedModelPath from uiState model name context
+    val currentModelName = when (val state = uiState) {
+        is ChatUiState.Ready -> state.modelName
+        is ChatUiState.Generating -> state.modelName
+        is ChatUiState.MessageComplete -> state.modelName
+        is ChatUiState.ModelLoading -> state.modelName
+        else -> ""
     }
 
+    val isGenerating = uiState is ChatUiState.Generating
+    val isModelReady = uiState is ChatUiState.Ready ||
+                       uiState is ChatUiState.Generating ||
+                       uiState is ChatUiState.MessageComplete
 
     Scaffold(
         modifier = Modifier.imePadding(),
@@ -67,28 +72,59 @@ fun ChatScreen(
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                val isModelReady by viewModel.isModelReady.collectAsState()
                 MessageInput(
                     onSendMessage = { viewModel.sendMessage(it) },
-                    isEnabled = isModelReady
+                    isEnabled = isModelReady && !isGenerating
                 )
             }
         }
     ) { paddingValues ->
         when (val state = uiState) {
-            is ChatUiState.Loading -> {
-                CircularProgressIndicator(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .wrapContentSize(Alignment.Center)
+            is ChatUiState.Idle -> {
+                // Empty initial state
+            }
+
+            is ChatUiState.ModelLoading -> {
+                LoadingScreen(
+                    modelName = state.modelName,
+                    progress = state.progress,
+                    modifier = Modifier.padding(paddingValues)
                 )
             }
 
-            is ChatUiState.Success -> {
+            is ChatUiState.Ready -> {
                 MessageList(
                     messages = state.messages,
-                    streamingMessage = state.streamingMessage,
-                    lastMessageStats = state.lastMessageStats,
+                    streamingState = null,
+                    lastMessageStats = null,
+                    onCancelGeneration = {},
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                )
+            }
+
+            is ChatUiState.Generating -> {
+                MessageList(
+                    messages = state.messages,
+                    streamingState = StreamingState(
+                        currentText = state.currentResponse,
+                        tokensGenerated = state.tokensGenerated
+                    ),
+                    lastMessageStats = null,
+                    onCancelGeneration = { viewModel.cancelPrediction() },
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                )
+            }
+
+            is ChatUiState.MessageComplete -> {
+                MessageList(
+                    messages = state.messages,
+                    streamingState = null,
+                    lastMessageStats = state.stats,
+                    onCancelGeneration = {},
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(paddingValues)
@@ -96,15 +132,12 @@ fun ChatScreen(
             }
 
             is ChatUiState.Error -> {
-                Text(
-                    text = state.message,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .wrapContentSize(Alignment.Center)
+                ErrorScreen(
+                    message = state.message,
+                    onRetry = if (state.canRetry) {{ viewModel.retry() }} else null,
+                    modifier = Modifier.padding(paddingValues)
                 )
             }
         }
     }
 }
-

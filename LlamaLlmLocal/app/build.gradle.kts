@@ -3,6 +3,8 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.kapt)
     alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.hilt)
 }
 
 android {
@@ -22,6 +24,14 @@ android {
         }
         ndk{
             abiFilters.add("arm64-v8a")
+        }
+        externalNativeBuild {
+            cmake {
+                arguments += listOf(
+                    "-DGGML_VULKAN=ON",
+                    "-DLLAMA_VULKAN=ON"
+                )
+            }
         }
     }
 
@@ -93,4 +103,18 @@ dependencies {
     implementation(libs.androidx.room.ktx)
     kapt(libs.androidx.room.compiler)
 
+    // Paging
+    implementation(libs.androidx.paging.runtime)
+    implementation(libs.androidx.paging.compose)
+    implementation(libs.androidx.room.paging)
+
+    // Hilt
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
+    implementation(libs.hilt.navigation.compose)
+
+    // Markdown
+    implementation(libs.compose.markdown)
+    implementation(libs.compose.markdown.code)
+    implementation(libs.coil.compose)
 }

@@ -1,181 +1,267 @@
 package com.nikolaspaci.app.llamallmlocal.viewmodel
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nikolaspaci.app.llamallmlocal.data.database.ChatMessage
-import com.nikolaspaci.app.llamallmlocal.data.database.Conversation
 import com.nikolaspaci.app.llamallmlocal.data.database.Sender
 import com.nikolaspaci.app.llamallmlocal.data.repository.ChatRepository
-import com.nikolaspaci.app.llamallmlocal.jni.LlamaJniService
+import com.nikolaspaci.app.llamallmlocal.engine.ModelEngine
+import com.nikolaspaci.app.llamallmlocal.engine.ModelParameterProvider
 import com.nikolaspaci.app.llamallmlocal.jni.PredictionEvent
-import kotlinx.coroutines.Dispatchers
+import com.nikolaspaci.app.llamallmlocal.usecase.PredictUseCase
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.firstOrNull
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import java.io.File
+import javax.inject.Inject
 
-data class Stats(val tokensPerSecond: Double, val durationInSeconds: Long)
+data class Stats(
+    val tokensPerSecond: Double,
+    val durationInSeconds: Long,
+    val totalTokens: Int = 0
+)
 
-class ChatViewModel(
+sealed class ChatUiState {
+    object Idle : ChatUiState()
+
+    data class ModelLoading(
+        val progress: Float = 0f,
+        val modelName: String = ""
+    ) : ChatUiState()
+
+    data class Ready(
+        val messages: List<ChatMessage>,
+        val modelName: String
+    ) : ChatUiState()
+
+    data class Generating(
+        val messages: List<ChatMessage>,
+        val currentResponse: String,
+        val tokensGenerated: Int,
+        val modelName: String
+    ) : ChatUiState()
+
+    data class MessageComplete(
+        val messages: List<ChatMessage>,
+        val stats: Stats,
+        val modelName: String
+    ) : ChatUiState()
+
+    data class Error(
+        val message: String,
+        val previousMessages: List<ChatMessage>? = null,
+        val canRetry: Boolean = true
+    ) : ChatUiState()
+}
+
+@HiltViewModel
+class ChatViewModel @Inject constructor(
     private val chatRepository: ChatRepository,
-    private val llamaJniService: LlamaJniService,
-    private val conversationId: Long
+    private val engine: ModelEngine,
+    private val predictUseCase: PredictUseCase,
+    private val parameterProvider: ModelParameterProvider,
+    savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow<ChatUiState>(ChatUiState.Loading)
+    private val conversationId: Long = savedStateHandle.get<Long>("conversationId") ?: 0L
+
+    private val _uiState = MutableStateFlow<ChatUiState>(ChatUiState.Idle)
     val uiState: StateFlow<ChatUiState> = _uiState.asStateFlow()
 
-    private val _isModelReady = MutableStateFlow(false)
-    val isModelReady: StateFlow<Boolean> = _isModelReady.asStateFlow()
-
-    private val _conversation = MutableStateFlow<Conversation?>(null)
-    val conversation: StateFlow<Conversation?> = _conversation.asStateFlow()
-
-    private var initialPredictionStarted = false
+    private var predictionJob: Job? = null
+    private var currentMessages: List<ChatMessage> = emptyList()
+    private var modelPath: String? = null
 
     init {
-        // Observe messages and update UI
-        viewModelScope.launch {
-            chatRepository.getConversation(conversationId).collect { conversationWithMessages ->
-                if (conversationWithMessages != null) {
-                    _conversation.value = conversationWithMessages.conversation
-                    val currentUiState = _uiState.value
-                    val streamingMessage = if (currentUiState is ChatUiState.Success) {
-                        currentUiState.streamingMessage
-                    } else {
-                        null
-                    }
-                    val lastMessageStats = if (currentUiState is ChatUiState.Success) {
-                        currentUiState.lastMessageStats
-                    } else {
-                        null
-                    }
-                    val messages = conversationWithMessages.messages
-                    _uiState.value = ChatUiState.Success(
-                        messages = messages,
-                        streamingMessage = streamingMessage,
-                        lastMessageStats = lastMessageStats
-                    )
+        observeConversation()
+        observeModelState()
+    }
 
-                    // Trigger initial prediction if needed
-                    if (_isModelReady.value && !initialPredictionStarted && messages.size == 1 && messages.first().sender == Sender.USER) {
-                        initialPredictionStarted = true
-                        runPrediction(messages.first().message)
+    private fun observeConversation() {
+        viewModelScope.launch {
+            chatRepository.getConversation(conversationId)
+                .distinctUntilChanged()
+                .collect { conversationWithMessages ->
+                    conversationWithMessages?.let { cwm ->
+                        currentMessages = cwm.messages
+
+                        if (modelPath != cwm.conversation.modelPath) {
+                            modelPath = cwm.conversation.modelPath
+                            loadModel(cwm.conversation.modelPath)
+                        }
+
+                        updateUiState()
                     }
+                }
+        }
+    }
+
+    private fun observeModelState() {
+        viewModelScope.launch {
+            engine.loadState.collect { state ->
+                when (state) {
+                    is ModelEngine.LoadState.Loading -> {
+                        _uiState.value = ChatUiState.ModelLoading(
+                            progress = state.progress,
+                            modelName = state.modelName
+                        )
+                    }
+                    is ModelEngine.LoadState.Loaded -> {
+                        updateUiState()
+                        engine.restoreHistory(currentMessages)
+                    }
+                    is ModelEngine.LoadState.Error -> {
+                        _uiState.value = ChatUiState.Error(
+                            message = state.message,
+                            previousMessages = currentMessages,
+                            canRetry = true
+                        )
+                    }
+                    else -> {}
                 }
             }
         }
+    }
 
-        // Observe model path and load model when it changes
-        viewModelScope.launch {
-            conversation.filterNotNull().map { it.modelPath }.distinctUntilChanged().collect { modelPath ->
-                if (modelPath.isNotEmpty()) {
-                    _isModelReady.value = false
-                    withContext(Dispatchers.IO) {
-                        llamaJniService.loadModel(modelPath)
-                        (_uiState.value as? ChatUiState.Success)?.let {
-                            if (it.messages.isNotEmpty()) {
-                                llamaJniService.restoreHistory(it.messages.toTypedArray())
-                            }
-                        }
-                    }
-                    _isModelReady.value = true
+    private suspend fun loadModel(path: String) {
+        val parameters = parameterProvider.getParametersForModel(path)
+        engine.loadModel(path, parameters)
+    }
 
-                    // After model is ready, check if we need to run initial prediction
-                    val currentState = _uiState.value
-                    if (currentState is ChatUiState.Success && !initialPredictionStarted && currentState.messages.size == 1 && currentState.messages.first().sender == Sender.USER) {
-                        initialPredictionStarted = true
-                        runPrediction(currentState.messages.first().message)
-                    }
-                } else {
-                    _isModelReady.value = false
-                }
-            }
+    private fun updateUiState() {
+        if (_uiState.value !is ChatUiState.Generating) {
+            _uiState.value = ChatUiState.Ready(
+                messages = currentMessages,
+                modelName = getModelName()
+            )
         }
     }
 
     fun sendMessage(text: String) {
-        val userMessage = ChatMessage(
-            conversationId = conversationId,
-            sender = Sender.USER,
-            message = text
-        )
+        if (text.isBlank()) return
+
         viewModelScope.launch {
+            val userMessage = ChatMessage(
+                conversationId = conversationId,
+                sender = Sender.USER,
+                message = text.trim()
+            )
             chatRepository.addMessageToConversation(userMessage)
-            runPrediction(text)
+
+            startPrediction(text.trim())
         }
     }
 
-    private fun runPrediction(prompt: String) {
-        viewModelScope.launch {
-            // Clear old stats and show loading indicator
-            (_uiState.value as? ChatUiState.Success)?.let {
-                _uiState.value = it.copy(streamingMessage = "", lastMessageStats = null)
-            }
+    private fun startPrediction(prompt: String) {
+        predictionJob?.cancel()
 
-            val botMessageFlow = llamaJniService.predict(prompt)
-            var accumulatedResponse = ""
-            var finalStats: Stats? = null
+        predictionJob = viewModelScope.launch {
+            val accumulatedResponse = StringBuilder()
+            var tokenCount = 0
 
-            botMessageFlow.collect { event ->
-                when (event) {
-                    is PredictionEvent.Token -> {
-                        accumulatedResponse += event.value
-                        (_uiState.value as? ChatUiState.Success)?.let {
-                            _uiState.value = it.copy(streamingMessage = accumulatedResponse)
+            _uiState.value = ChatUiState.Generating(
+                messages = currentMessages,
+                currentResponse = "",
+                tokensGenerated = 0,
+                modelName = getModelName()
+            )
+
+            predictUseCase(prompt, modelPath ?: "")
+                .catch { e ->
+                    _uiState.value = ChatUiState.Error(
+                        message = e.message ?: "Erreur de prediction",
+                        previousMessages = currentMessages,
+                        canRetry = true
+                    )
+                }
+                .collect { event ->
+                    when (event) {
+                        is PredictionEvent.Token -> {
+                            accumulatedResponse.append(event.value)
+                            tokenCount++
+
+                            _uiState.value = ChatUiState.Generating(
+                                messages = currentMessages,
+                                currentResponse = accumulatedResponse.toString(),
+                                tokensGenerated = tokenCount,
+                                modelName = getModelName()
+                            )
                         }
-                    }
-                    is PredictionEvent.Completion -> {
-                        finalStats = Stats(event.tokensPerSecond, event.durationInSeconds)
+
+                        is PredictionEvent.Completion -> {
+                            val botMessage = ChatMessage(
+                                conversationId = conversationId,
+                                sender = Sender.BOT,
+                                message = accumulatedResponse.toString()
+                            )
+                            chatRepository.addMessageToConversation(botMessage)
+
+                            _uiState.value = ChatUiState.MessageComplete(
+                                messages = currentMessages + botMessage,
+                                stats = Stats(
+                                    tokensPerSecond = event.tokensPerSecond,
+                                    durationInSeconds = event.durationInSeconds,
+                                    totalTokens = tokenCount
+                                ),
+                                modelName = getModelName()
+                            )
+                        }
+
+                        is PredictionEvent.Error -> {
+                            _uiState.value = ChatUiState.Error(
+                                message = event.message,
+                                previousMessages = currentMessages,
+                                canRetry = event.isRecoverable
+                            )
+                        }
+
+                        else -> {}
                     }
                 }
-            }
-
-            // Save final bot message
-            val botChatMessage = ChatMessage(
-                conversationId = conversationId,
-                sender = Sender.BOT,
-                message = accumulatedResponse
-            )
-            chatRepository.addMessageToConversation(botChatMessage)
-
-            // Hide streaming indicator and show stats
-            (_uiState.value as? ChatUiState.Success)?.let {
-                _uiState.value = it.copy(streamingMessage = null, lastMessageStats = finalStats)
-            }
         }
     }
 
-    fun changeModel(modelPath: String) {
+    fun cancelPrediction() {
+        predictionJob?.cancel()
+        predictionJob = null
+
+        _uiState.value = ChatUiState.Ready(
+            messages = currentMessages,
+            modelName = getModelName()
+        )
+    }
+
+    fun retry() {
+        currentMessages.lastOrNull { it.sender == Sender.USER }?.let { lastUserMessage ->
+            startPrediction(lastUserMessage.message)
+        }
+    }
+
+    fun changeModel(newModelPath: String) {
         viewModelScope.launch {
-            chatRepository.updateConversationModel(conversationId, modelPath)
+            chatRepository.updateConversationModel(conversationId, newModelPath)
         }
     }
 
     suspend fun deleteConversation() {
-        // We need to fetch the conversation object first to delete it
         chatRepository.getConversation(conversationId).firstOrNull()?.let {
             chatRepository.deleteConversation(it.conversation)
         }
     }
 
+    private fun getModelName(): String {
+        return modelPath?.let { File(it).nameWithoutExtension } ?: "Aucun modele"
+    }
+
     override fun onCleared() {
         super.onCleared()
-        llamaJniService.unloadModel()
+        predictionJob?.cancel()
     }
-}
-
-sealed class ChatUiState {
-    object Loading : ChatUiState()
-    data class Success(
-        val messages: List<ChatMessage>,
-        val streamingMessage: String? = null,
-        val lastMessageStats: Stats? = null // Stats for the most recent bot message
-    ) : ChatUiState()
-    data class Error(val message: String) : ChatUiState()
 }

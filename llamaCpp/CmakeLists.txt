@@ -14,16 +14,33 @@ set(SOURCE_FILES_LIST
     ${PROJECT_SOURCE_DIR}/src/JNIMethods/PredictJni.cpp
     ${PROJECT_SOURCE_DIR}/src/JNIMethods/FreeJni.cpp
     ${PROJECT_SOURCE_DIR}/src/JNIMethods/RestoreHistoryJni.cpp
+    ${PROJECT_SOURCE_DIR}/src/JNIMethods/HardwareInfoJni.cpp
 )
 
 if(ANDROID)
     set(LLAMA_CURL OFF CACHE BOOL "Disable CURL for Android" FORCE)
     set(LLAMA_INSTALL_LLDB_FORMATTERS OFF CACHE BOOL "Disable lldb formatters for Android" FORCE)
     set(ANDROID_ARM_NEON ON CACHE BOOL "Enable NEON" FORCE)
-    
+
     # Optimisations GGML pour Android
     set(GGML_NATIVE OFF CACHE BOOL "Disable native optimizations" FORCE)
     set(GGML_OPENMP ON CACHE BOOL "Enable OpenMP" FORCE)
+
+    # Option pour activer Vulkan
+    option(LLAMA_VULKAN "Enable Vulkan GPU acceleration" ON)
+
+    if(LLAMA_VULKAN)
+        find_library(VULKAN_LIB vulkan)
+
+        if(VULKAN_LIB)
+            message(STATUS "Vulkan found: ${VULKAN_LIB}")
+            set(GGML_VULKAN ON CACHE BOOL "Enable Vulkan backend" FORCE)
+            add_definitions(-DGGML_USE_VULKAN)
+        else()
+            message(WARNING "Vulkan library not found - GPU acceleration disabled")
+            set(GGML_VULKAN OFF CACHE BOOL "Disable Vulkan backend" FORCE)
+        endif()
+    endif()
 
 endif()
 
@@ -69,6 +86,10 @@ function(create_android_jni_library target_name arch_name march_flags)
     )
 
     target_link_libraries(${target_name} PRIVATE llama common)
+
+    if(VULKAN_LIB)
+        target_link_libraries(${target_name} PRIVATE ${VULKAN_LIB})
+    endif()
 endfunction() 
 
 

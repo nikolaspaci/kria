@@ -46,18 +46,23 @@ Java_com_nikolaspaci_app_llamallmlocal_LlamaApi_predict(
     jfieldID topKField = env->GetFieldID(modelParamsClass, "topK", "I");
     jfieldID topPField = env->GetFieldID(modelParamsClass, "topP", "F");
     jfieldID minPField = env->GetFieldID(modelParamsClass, "minP", "F");
+    jfieldID maxTokensField = env->GetFieldID(modelParamsClass, "maxTokens", "I");
+    jfieldID repeatPenaltyField = env->GetFieldID(modelParamsClass, "repeatPenalty", "F");
 
     // Get the values from the modelParameters object
     jfloat temperature = env->GetFloatField(modelParameters, temperatureField);
     jint topK = env->GetIntField(modelParameters, topKField);
     jfloat topP = env->GetFloatField(modelParameters, topPField);
     jfloat minP = env->GetFloatField(modelParameters, minPField);
+    jint maxTokens = env->GetIntField(modelParameters, maxTokensField);
+    jfloat repeatPenalty = env->GetFloatField(modelParameters, repeatPenaltyField);
 
     // Update the session parameters
     session->sparams.temp = temperature;
     session->sparams.top_k = topK;
     session->sparams.top_p = topP;
     session->sparams.min_p = minP;
+    session->sparams.penalty_repeat = repeatPenalty;
 
     const llama_model* model = session->model.get();
     llama_context* context = session->context.get();
@@ -117,7 +122,7 @@ Java_com_nikolaspaci_app_llamallmlocal_LlamaApi_predict(
 
     // Configure the generation
     std::stringstream result_ss;
-    const int max_new_tokens = 256;
+    const int max_new_tokens = maxTokens;
     int n_cur = n_tokens;
 
     common_sampler *smpl = common_sampler_init(model, session->sparams);
@@ -186,7 +191,5 @@ Java_com_nikolaspaci_app_llamallmlocal_LlamaApi_predict(
         tokens_per_second,
         duration_count_seconds
     );
-
-    env->CallVoidMethod(callback_obj, on_complete_method);
 
 }

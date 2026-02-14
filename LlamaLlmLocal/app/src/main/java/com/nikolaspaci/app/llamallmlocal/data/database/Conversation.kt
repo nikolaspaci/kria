@@ -8,5 +8,9 @@ data class Conversation(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     val modelPath: String,
-    val timestamp: Long = System.currentTimeMillis()
+    val timestamp: Long = System.currentTimeMillis(),
+    val title: String? = null,
+    val lastMessagePreview: String? = null,
+    val lastUpdatedAt: Long = System.currentTimeMillis(),
+    val messageCount: Int = 0
 )

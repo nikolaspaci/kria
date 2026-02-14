@@ -5,7 +5,11 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [Conversation::class, ChatMessage::class, ModelParameter::class], version = 2, exportSchema = false)
+@Database(
+    entities = [Conversation::class, ChatMessage::class, ModelParameter::class],
+    version = 4,
+    exportSchema = true
+)
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun chatDao(): ChatDao
@@ -21,7 +25,9 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "chat_database"
-                ).fallbackToDestructiveMigration().build()
+                )
+                .addMigrations(*DatabaseMigrations.ALL_MIGRATIONS)
+                .build()
                 INSTANCE = instance
                 instance
             }

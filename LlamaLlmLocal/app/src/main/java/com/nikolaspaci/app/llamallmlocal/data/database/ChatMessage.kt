@@ -2,6 +2,7 @@ package com.nikolaspaci.app.llamallmlocal.data.database
 
 import androidx.room.Entity
 import androidx.room.ForeignKey
+import androidx.room.Index
 import androidx.room.PrimaryKey
 
 enum class Sender {
@@ -10,6 +11,11 @@ enum class Sender {
 
 @Entity(
     tableName = "chat_messages",
+    indices = [
+        Index(value = ["conversationId"]),
+        Index(value = ["timestamp"]),
+        Index(value = ["conversationId", "timestamp"])
+    ],
     foreignKeys = [
         ForeignKey(
             entity = Conversation::class,
