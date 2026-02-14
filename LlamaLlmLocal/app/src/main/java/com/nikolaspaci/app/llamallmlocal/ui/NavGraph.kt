@@ -1,5 +1,6 @@
 package com.nikolaspaci.app.llamallmlocal.ui
 
+import android.net.Uri
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.DrawerValue
@@ -44,7 +45,7 @@ sealed class Screen(val route: String) {
     }
     object Settings : Screen("settings/{modelId}") {
         fun createRoute(modelId: String): String {
-            return "settings/$modelId"
+            return "settings/${Uri.encode(modelId)}"
         }
     }
     object HuggingFace : Screen("huggingface")
