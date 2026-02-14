@@ -22,9 +22,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.nikolaspaci.app.llamallmlocal.data.database.AppDatabase
-import com.nikolaspaci.app.llamallmlocal.data.repository.ModelParameterRepository
-import com.nikolaspaci.app.llamallmlocal.jni.LlamaJniService
 import com.nikolaspaci.app.llamallmlocal.ui.chat.ChatScreen
 import com.nikolaspaci.app.llamallmlocal.ui.common.HistoryMenuItems
 import com.nikolaspaci.app.llamallmlocal.ui.home.HomeChatScreen
@@ -33,7 +30,6 @@ import com.nikolaspaci.app.llamallmlocal.viewmodel.ChatViewModel
 import com.nikolaspaci.app.llamallmlocal.viewmodel.HistoryViewModel
 import com.nikolaspaci.app.llamallmlocal.viewmodel.ModelFileViewModel
 import com.nikolaspaci.app.llamallmlocal.viewmodel.ModelFileViewModelFactory
-import com.nikolaspaci.app.llamallmlocal.viewmodel.SettingsViewModelFactory
 import com.nikolaspaci.app.llamallmlocal.viewmodel.ViewModelFactory
 import kotlinx.coroutines.launch
 
@@ -60,8 +56,7 @@ fun AppNavigation(factory: ViewModelFactory) {
     val modelFileViewModel: ModelFileViewModel = viewModel(
         factory = ModelFileViewModelFactory(
             LocalContext.current,
-            LocalContext.current.getSharedPreferences("app_prefs", 0),
-            LlamaJniService
+            LocalContext.current.getSharedPreferences("app_prefs", 0)
         )
     )
 
@@ -137,13 +132,9 @@ fun AppNavigation(factory: ViewModelFactory) {
                 )
             ) { backStackEntry ->
                 val modelId = backStackEntry.arguments?.getString("modelId") ?: ""
-                val context = LocalContext.current
-                val db = AppDatabase.getDatabase(context)
-                val modelParameterRepository = ModelParameterRepository(db.modelParameterDao())
-                val settingsViewModelFactory = SettingsViewModelFactory(modelParameterRepository, modelId)
                 SettingsScreen(
-                    navController = navController,
-                    viewModel = viewModel(factory = settingsViewModelFactory)
+                    modelId = modelId,
+                    onNavigateBack = { navController.popBackStack() }
                 )
             }
         }

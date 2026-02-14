@@ -26,15 +26,12 @@ if(ANDROID)
     set(GGML_NATIVE OFF CACHE BOOL "Disable native optimizations" FORCE)
     set(GGML_OPENMP ON CACHE BOOL "Enable OpenMP" FORCE)
 
-    # Option pour activer Vulkan
-    option(LLAMA_VULKAN "Enable Vulkan GPU acceleration" ON)
-
-    if(LLAMA_VULKAN)
+    # Vulkan support: controlled by GGML_VULKAN passed from Gradle
+    if(GGML_VULKAN)
         find_library(VULKAN_LIB vulkan)
 
         if(VULKAN_LIB)
             message(STATUS "Vulkan found: ${VULKAN_LIB}")
-            set(GGML_VULKAN ON CACHE BOOL "Enable Vulkan backend" FORCE)
             add_definitions(-DGGML_USE_VULKAN)
         else()
             message(WARNING "Vulkan library not found - GPU acceleration disabled")
@@ -71,7 +68,6 @@ function(create_android_jni_library target_name arch_name march_flags)
         -DGGML_CPU_ARM_ARCH=${arch_name}
         -DGGML_F16C=ON
         -DGGML_FMA=ON
-        -DLLAMA_VULKAN=1
         ${march_flags}
         -O3
         -DNDEBUG

@@ -16,7 +16,7 @@ hilt = "2.51"
 hilt-navigation-compose = "1.2.0"
 ksp = "2.0.0-1.0.21"
 paging = "3.3.0"
-compose-markdown = "0.5.4"
+compose-markdown = "0.27.0"
 coil = "2.6.0"
 
 [libraries]
@@ -59,8 +59,7 @@ hilt-compiler = { group = "com.google.dagger", name = "hilt-compiler", version.r
 hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-compose", version.ref = "hilt-navigation-compose" }
 
 # Markdown
-compose-markdown = { group = "com.mikepenz", name = "multiplatform-markdown-renderer-m3", version.ref = "compose-markdown" }
-compose-markdown-code = { group = "com.mikepenz", name = "multiplatform-markdown-renderer-code", version.ref = "compose-markdown" }
+compose-markdown = { group = "com.mikepenz", name = "multiplatform-markdown-renderer-m3-android", version.ref = "compose-markdown" }
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
 
 [plugins]

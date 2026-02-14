@@ -28,8 +28,7 @@ android {
         externalNativeBuild {
             cmake {
                 arguments += listOf(
-                    "-DGGML_VULKAN=ON",
-                    "-DLLAMA_VULKAN=ON"
+                    "-DGGML_VULKAN=OFF"
                 )
             }
         }
@@ -88,6 +87,7 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation("androidx.compose.material:material-icons-extended")
     implementation(libs.androidx.activity.compose)
 
 
@@ -115,6 +115,5 @@ dependencies {
 
     // Markdown
     implementation(libs.compose.markdown)
-    implementation(libs.compose.markdown.code)
     implementation(libs.coil.compose)
 }

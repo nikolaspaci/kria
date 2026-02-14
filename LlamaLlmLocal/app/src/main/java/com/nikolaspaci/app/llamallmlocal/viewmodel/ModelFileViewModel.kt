@@ -6,7 +6,6 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.nikolaspaci.app.llamallmlocal.jni.LlamaJniService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,8 +19,7 @@ const val MODEL_PATH_KEY = "model_path"
 
 class ModelFileViewModel(
     private val context: Context,
-    private val sharedPreferences: SharedPreferences,
-    private val llamaJniService: LlamaJniService
+    private val sharedPreferences: SharedPreferences
 ) : ViewModel() {
 
     private val _cachedModels = MutableStateFlow<List<File>>(emptyList())
@@ -77,7 +75,6 @@ class ModelFileViewModel(
 
     fun saveModelPath(path: String) {
         sharedPreferences.edit().putString(MODEL_PATH_KEY, path).apply()
-        llamaJniService.loadModel(path)
     }
 
     fun getModelPath(): String? {

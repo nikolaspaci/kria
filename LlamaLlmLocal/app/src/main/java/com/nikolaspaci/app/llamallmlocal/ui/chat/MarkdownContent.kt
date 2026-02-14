@@ -5,9 +5,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
-import com.mikepenz.markdown.compose.Markdown
-import com.mikepenz.markdown.model.markdownColors
-import com.mikepenz.markdown.model.markdownTypography
+import com.mikepenz.markdown.m3.Markdown
+import com.mikepenz.markdown.m3.markdownColor
+import com.mikepenz.markdown.m3.markdownTypography
 
 @Composable
 fun MarkdownContent(
@@ -16,7 +16,7 @@ fun MarkdownContent(
 ) {
     Markdown(
         content = content,
-        colors = markdownColors(
+        colors = markdownColor(
             text = MaterialTheme.colorScheme.onSurface,
             codeText = MaterialTheme.colorScheme.onSurfaceVariant,
             codeBackground = MaterialTheme.colorScheme.surfaceVariant,
