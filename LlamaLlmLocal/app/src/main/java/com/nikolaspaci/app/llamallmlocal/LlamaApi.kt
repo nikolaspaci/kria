@@ -1,6 +1,7 @@
 package com.nikolaspaci.app.llamallmlocal
 
 import android.os.Build
+import com.nikolaspaci.app.llamallmlocal.data.database.ChatMessage
 import com.nikolaspaci.app.llamallmlocal.data.database.ModelParameter
 
 interface PredictCallback {
@@ -31,7 +32,7 @@ object LlamaApi {
     external fun init(modelPath: String, modelParameters: ModelParameter): Long
     external fun free(sessionPtr: Long)
     external fun predict(sessionPtr: Long, prompt: String, modelParameters: ModelParameter, callback: PredictCallback)
-    external fun restoreHistory(sessionPtr: Long, messages: Array<Any>)
+    external fun restoreHistory(sessionPtr: Long, messages: Array<ChatMessage>)
 
     // Hardware info methods
     external fun isVulkanAvailable(): Boolean

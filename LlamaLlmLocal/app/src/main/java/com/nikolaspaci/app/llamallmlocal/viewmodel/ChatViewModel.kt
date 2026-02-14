@@ -77,7 +77,8 @@ class ChatViewModel @Inject constructor(
 
     private var predictionJob: Job? = null
     private var currentMessages: List<ChatMessage> = emptyList()
-    private var modelPath: String? = null
+    private val _modelPath = MutableStateFlow<String?>(null)
+    val currentModelPath: StateFlow<String?> = _modelPath.asStateFlow()
 
     init {
         observeConversation()
@@ -92,8 +93,8 @@ class ChatViewModel @Inject constructor(
                     conversationWithMessages?.let { cwm ->
                         currentMessages = cwm.messages
 
-                        if (modelPath != cwm.conversation.modelPath) {
-                            modelPath = cwm.conversation.modelPath
+                        if (_modelPath.value != cwm.conversation.modelPath) {
+                            _modelPath.value = cwm.conversation.modelPath
                             loadModel(cwm.conversation.modelPath)
                         }
 
@@ -116,6 +117,7 @@ class ChatViewModel @Inject constructor(
                     is ModelEngine.LoadState.Loaded -> {
                         updateUiState()
                         engine.restoreHistory(currentMessages)
+                        triggerPendingPredictionIfNeeded()
                     }
                     is ModelEngine.LoadState.Error -> {
                         _uiState.value = ChatUiState.Error(
@@ -133,6 +135,13 @@ class ChatViewModel @Inject constructor(
     private suspend fun loadModel(path: String) {
         val parameters = parameterProvider.getParametersForModel(path)
         engine.loadModel(path, parameters)
+    }
+
+    private fun triggerPendingPredictionIfNeeded() {
+        val lastMessage = currentMessages.lastOrNull() ?: return
+        if (lastMessage.sender == Sender.USER) {
+            startPrediction(lastMessage.message)
+        }
     }
 
     private fun updateUiState() {
@@ -173,7 +182,7 @@ class ChatViewModel @Inject constructor(
                 modelName = getModelName()
             )
 
-            predictUseCase(prompt, modelPath ?: "")
+            predictUseCase(prompt, _modelPath.value ?: "")
                 .catch { e ->
                     _uiState.value = ChatUiState.Error(
                         message = e.message ?: "Erreur de prediction",
@@ -257,7 +266,7 @@ class ChatViewModel @Inject constructor(
     }
 
     private fun getModelName(): String {
-        return modelPath?.let { File(it).nameWithoutExtension } ?: "Aucun modele"
+        return _modelPath.value?.let { File(it).nameWithoutExtension } ?: "Aucun modele"
     }
 
     override fun onCleared() {

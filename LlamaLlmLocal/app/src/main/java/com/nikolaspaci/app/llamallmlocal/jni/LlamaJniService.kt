@@ -2,6 +2,7 @@ package com.nikolaspaci.app.llamallmlocal.jni
 
 import com.nikolaspaci.app.llamallmlocal.LlamaApi
 import com.nikolaspaci.app.llamallmlocal.PredictCallback
+import com.nikolaspaci.app.llamallmlocal.data.database.ChatMessage
 import com.nikolaspaci.app.llamallmlocal.data.database.ModelParameter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
@@ -61,7 +62,7 @@ object LlamaJniService {
         }
     }
 
-    fun restoreHistory(messages: Array<Any>) {
+    fun restoreHistory(messages: Array<ChatMessage>) {
         if (sessionPtr != 0L) {
             LlamaApi.restoreHistory(sessionPtr, messages)
         }

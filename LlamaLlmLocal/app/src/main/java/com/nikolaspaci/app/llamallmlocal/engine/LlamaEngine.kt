@@ -113,15 +113,7 @@ class LlamaEngine @Inject constructor() : ModelEngine {
         if (sessionPtr == 0L) return
 
         withContext(Dispatchers.IO) {
-            val historyArray = messages.map { message ->
-                mapOf(
-                    "sender" to message.sender.name,
-                    "message" to message.message
-                )
-            }.toTypedArray()
-
-            @Suppress("UNCHECKED_CAST")
-            LlamaApi.restoreHistory(sessionPtr, historyArray as Array<Any>)
+            LlamaApi.restoreHistory(sessionPtr, messages.toTypedArray())
         }
     }
 

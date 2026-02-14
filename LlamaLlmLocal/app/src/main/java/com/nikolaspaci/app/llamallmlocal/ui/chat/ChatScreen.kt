@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -35,6 +36,15 @@ fun ChatScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var selectedModelPath by remember { mutableStateOf("") }
+    val viewModelModelPath by viewModel.currentModelPath.collectAsState()
+
+    LaunchedEffect(viewModelModelPath) {
+        viewModelModelPath?.let { path ->
+            if (path.isNotEmpty()) {
+                selectedModelPath = path
+            }
+        }
+    }
 
     // Update selectedModelPath from uiState model name context
     val currentModelName = when (val state = uiState) {
