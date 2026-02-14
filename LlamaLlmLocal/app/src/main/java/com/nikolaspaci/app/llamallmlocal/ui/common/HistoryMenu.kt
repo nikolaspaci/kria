@@ -53,9 +53,15 @@ fun HistoryMenuItems(
             }
         }
         is HistoryUiState.Success -> {
+            val searchQuery by viewModel.searchQuery.collectAsState()
             if (state.conversations.isEmpty()) {
                 ListItem(
-                    headlineContent = { Text("No conversations yet.") }
+                    headlineContent = {
+                        Text(
+                            if (searchQuery.isNotBlank()) "No matching conversations."
+                            else "No conversations yet."
+                        )
+                    }
                 )
             } else {
                 LazyColumn {

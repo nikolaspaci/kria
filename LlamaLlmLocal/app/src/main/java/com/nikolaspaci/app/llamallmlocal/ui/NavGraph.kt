@@ -2,6 +2,7 @@ package com.nikolaspaci.app.llamallmlocal.ui
 
 import android.net.Uri
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.HorizontalDivider
@@ -16,6 +17,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
@@ -25,6 +28,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.nikolaspaci.app.llamallmlocal.ui.chat.ChatScreen
 import com.nikolaspaci.app.llamallmlocal.ui.common.HistoryMenuItems
+import com.nikolaspaci.app.llamallmlocal.ui.common.SearchBar
 import com.nikolaspaci.app.llamallmlocal.ui.home.HomeChatScreen
 import com.nikolaspaci.app.llamallmlocal.ui.huggingface.HuggingFaceScreen
 import com.nikolaspaci.app.llamallmlocal.ui.settings.SettingsScreen
@@ -82,6 +86,13 @@ fun AppNavigation(factory: ViewModelFactory) {
                         text = "Chats",
                         style = MaterialTheme.typography.titleMedium,
                         modifier = Modifier.padding(16.dp)
+                    )
+                    val searchQuery by historyViewModel.searchQuery.collectAsState()
+                    SearchBar(
+                        query = searchQuery,
+                        onQueryChange = historyViewModel::updateSearchQuery,
+                        placeholder = "Search conversations...",
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
                     )
                     HistoryMenuItems(
                         viewModel = historyViewModel,
