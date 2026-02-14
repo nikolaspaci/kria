@@ -30,7 +30,8 @@ fun ChatScreen(
     viewModel: ChatViewModel,
     modelFileViewModel: ModelFileViewModel,
     onOpenDrawer: () -> Unit,
-    onNavigateToSettings: (String) -> Unit
+    onNavigateToSettings: (String) -> Unit,
+    onNavigateToHuggingFace: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var selectedModelPath by remember { mutableStateOf("") }
@@ -69,6 +70,7 @@ fun ChatScreen(
                         selectedModelPath = it
                         viewModel.changeModel(it)
                     },
+                    onDownloadFromHuggingFace = onNavigateToHuggingFace,
                     modifier = Modifier.fillMaxWidth()
                 )
                 Spacer(modifier = Modifier.height(8.dp))

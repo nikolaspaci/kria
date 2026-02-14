@@ -13,12 +13,15 @@ import com.nikolaspaci.app.llamallmlocal.engine.ModelEngine
 import com.nikolaspaci.app.llamallmlocal.engine.ModelParameterProvider
 import com.nikolaspaci.app.llamallmlocal.util.HardwareCapabilities
 import com.nikolaspaci.app.llamallmlocal.util.OptimalConfigurationService
+import com.google.gson.Gson
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import okhttp3.OkHttpClient
+import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
 
 @Module
@@ -72,6 +75,21 @@ object AppModule {
         hardwareCapabilities: HardwareCapabilities
     ): OptimalConfigurationService {
         return OptimalConfigurationService(context, hardwareCapabilities)
+    }
+
+    @Provides
+    @Singleton
+    fun provideOkHttpClient(): OkHttpClient {
+        return OkHttpClient.Builder()
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(5, TimeUnit.MINUTES)
+            .build()
+    }
+
+    @Provides
+    @Singleton
+    fun provideGson(): Gson {
+        return Gson()
     }
 }
 

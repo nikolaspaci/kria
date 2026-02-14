@@ -116,4 +116,8 @@ dependencies {
     // Markdown
     implementation(libs.compose.markdown)
     implementation(libs.coil.compose)
+
+    // OkHttp + Gson
+    implementation(libs.okhttp)
+    implementation(libs.gson)
 }

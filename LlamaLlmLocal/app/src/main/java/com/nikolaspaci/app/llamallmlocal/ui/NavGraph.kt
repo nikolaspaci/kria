@@ -25,9 +25,11 @@ import androidx.navigation.navArgument
 import com.nikolaspaci.app.llamallmlocal.ui.chat.ChatScreen
 import com.nikolaspaci.app.llamallmlocal.ui.common.HistoryMenuItems
 import com.nikolaspaci.app.llamallmlocal.ui.home.HomeChatScreen
+import com.nikolaspaci.app.llamallmlocal.ui.huggingface.HuggingFaceScreen
 import com.nikolaspaci.app.llamallmlocal.ui.settings.SettingsScreen
 import com.nikolaspaci.app.llamallmlocal.viewmodel.ChatViewModel
 import com.nikolaspaci.app.llamallmlocal.viewmodel.HistoryViewModel
+import com.nikolaspaci.app.llamallmlocal.viewmodel.HuggingFaceViewModel
 import com.nikolaspaci.app.llamallmlocal.viewmodel.ModelFileViewModel
 import com.nikolaspaci.app.llamallmlocal.viewmodel.ModelFileViewModelFactory
 import com.nikolaspaci.app.llamallmlocal.viewmodel.ViewModelFactory
@@ -45,6 +47,7 @@ sealed class Screen(val route: String) {
             return "settings/$modelId"
         }
     }
+    object HuggingFace : Screen("huggingface")
 }
 
 @Composable
@@ -103,6 +106,9 @@ fun AppNavigation(factory: ViewModelFactory) {
                     },
                     onOpenDrawer = {
                         scope.launch { drawerState.open() }
+                    },
+                    onNavigateToHuggingFace = {
+                        navController.navigate(Screen.HuggingFace.route)
                     }
                 )
             }
@@ -122,6 +128,20 @@ fun AppNavigation(factory: ViewModelFactory) {
                     },
                     onNavigateToSettings = { modelId ->
                         navController.navigate(Screen.Settings.createRoute(modelId))
+                    },
+                    onNavigateToHuggingFace = {
+                        navController.navigate(Screen.HuggingFace.route)
+                    }
+                )
+            }
+            composable(Screen.HuggingFace.route) {
+                val huggingFaceViewModel: HuggingFaceViewModel = hiltViewModel()
+                HuggingFaceScreen(
+                    viewModel = huggingFaceViewModel,
+                    onNavigateBack = { navController.popBackStack() },
+                    onModelDownloaded = {
+                        modelFileViewModel.loadCachedModels()
+                        navController.popBackStack()
                     }
                 )
             }

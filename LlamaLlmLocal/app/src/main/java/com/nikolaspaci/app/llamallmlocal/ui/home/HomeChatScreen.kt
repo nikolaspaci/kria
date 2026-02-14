@@ -37,7 +37,8 @@ fun HomeChatScreen(
     homeViewModel: HomeViewModel,
     modelFileViewModel: ModelFileViewModel,
     onStartChat: (Long) -> Unit,
-    onOpenDrawer: () -> Unit
+    onOpenDrawer: () -> Unit,
+    onNavigateToHuggingFace: () -> Unit = {}
 ) {
     var selectedModelPath by remember { mutableStateOf(modelFileViewModel.getModelPath() ?: "") }
     val scope = rememberCoroutineScope()
@@ -84,6 +85,7 @@ fun HomeChatScreen(
                     selectedModelPath = it
                     modelFileViewModel.saveModelPath(it)
                 },
+                onDownloadFromHuggingFace = onNavigateToHuggingFace,
                 modifier = Modifier.fillMaxWidth()
             )
         }

@@ -31,6 +31,7 @@ fun ModelSelector(
     modelFileViewModel: ModelFileViewModel,
     selectedModelPath: String,
     onModelSelected: (String) -> Unit,
+    onDownloadFromHuggingFace: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -90,6 +91,13 @@ fun ModelSelector(
                         type = "*/*"
                     }
                     filePickerLauncher.launch(intent)
+                    expanded = false
+                }
+            )
+            DropdownMenuItem(
+                text = { Text("Download from Hugging Face...") },
+                onClick = {
+                    onDownloadFromHuggingFace()
                     expanded = false
                 }
             )

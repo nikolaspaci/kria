@@ -18,6 +18,8 @@ ksp = "2.0.0-1.0.21"
 paging = "3.3.0"
 compose-markdown = "0.27.0"
 coil = "2.6.0"
+okhttp = "4.12.0"
+gson = "2.11.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -61,6 +63,10 @@ hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navigation-com
 # Markdown
 compose-markdown = { group = "com.mikepenz", name = "multiplatform-markdown-renderer-m3-android", version.ref = "compose-markdown" }
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
+
+# OkHttp + Gson
+okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
+gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
