@@ -5,15 +5,20 @@ import com.nikolaspaci.app.llamallmlocal.data.database.ModelParameterDao
 
 class ModelParameterRepository(private val modelParameterDao: ModelParameterDao) {
 
-    suspend fun getModelParameter(modelId: String): ModelParameter? {
-        return modelParameterDao.getModelParameter(modelId)
+    suspend fun getById(id: Long): ModelParameter? {
+        return modelParameterDao.getModelParameterById(id)
     }
 
-    suspend fun insert(modelParameter: ModelParameter) {
-        modelParameterDao.insert(modelParameter)
+    suspend fun insert(modelParameter: ModelParameter): Long {
+        return modelParameterDao.insert(modelParameter)
     }
 
     suspend fun update(modelParameter: ModelParameter) {
         modelParameterDao.update(modelParameter)
+    }
+
+    suspend fun duplicate(source: ModelParameter): Long {
+        val copy = source.copy(id = 0)
+        return modelParameterDao.insert(copy)
     }
 }

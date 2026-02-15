@@ -9,11 +9,11 @@ import androidx.room.Update
 @Dao
 interface ModelParameterDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insert(modelParameter: ModelParameter)
+    suspend fun insert(modelParameter: ModelParameter): Long
 
     @Update
     suspend fun update(modelParameter: ModelParameter)
 
-    @Query("SELECT * FROM model_parameters WHERE modelId = :modelId")
-    suspend fun getModelParameter(modelId: String): ModelParameter?
+    @Query("SELECT * FROM model_parameters WHERE id = :id")
+    suspend fun getModelParameterById(id: Long): ModelParameter?
 }

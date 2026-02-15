@@ -12,5 +12,6 @@ data class Conversation(
     val title: String? = null,
     val lastMessagePreview: String? = null,
     val lastUpdatedAt: Long = System.currentTimeMillis(),
-    val messageCount: Int = 0
+    val messageCount: Int = 0,
+    val modelParameterId: Long? = null
 )

@@ -25,6 +25,7 @@ import com.nikolaspaci.app.llamallmlocal.viewmodel.SettingsViewModel
 @Composable
 fun SettingsScreen(
     modelId: String,
+    conversationId: Long? = null,
     modelFileViewModel: ModelFileViewModel,
     onModelChanged: (String) -> Unit,
     onNavigateToHuggingFace: () -> Unit,
@@ -35,7 +36,11 @@ fun SettingsScreen(
     var currentModelId by remember { mutableStateOf(modelId) }
 
     LaunchedEffect(modelId) {
-        viewModel.loadParameters(modelId)
+        if (conversationId != null) {
+            viewModel.loadParametersForConversation(conversationId, modelId)
+        } else {
+            viewModel.loadParameters(modelId)
+        }
     }
 
     Scaffold(
@@ -65,7 +70,11 @@ fun SettingsScreen(
                     onModelSelected = { newPath ->
                         currentModelId = newPath
                         onModelChanged(newPath)
-                        viewModel.loadParameters(newPath)
+                        if (conversationId != null) {
+                            viewModel.loadParametersForConversation(conversationId, newPath)
+                        } else {
+                            viewModel.loadParameters(newPath)
+                        }
                     },
                     onDownloadFromHuggingFace = onNavigateToHuggingFace,
                     modifier = Modifier.fillMaxWidth()

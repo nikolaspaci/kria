@@ -48,9 +48,8 @@ object ParameterValidator {
         return ValidationResult(errors.isEmpty(), errors)
     }
 
-    fun getDefaultParameters(modelId: String): ModelParameter {
+    fun getDefaultParameters(): ModelParameter {
         return ModelParameter(
-            modelId = modelId,
             threadCount = (ModelParameter.getMaxThreads() * 0.7).toInt().coerceIn(1, ModelParameter.getMaxThreads())
         )
     }

@@ -19,7 +19,7 @@ class OptimalConfigurationService @Inject constructor(
     private val hardwareCapabilities: HardwareCapabilities
 ) {
 
-    fun getOptimalConfiguration(modelId: String): ModelParameter {
+    fun getOptimalConfiguration(): ModelParameter {
         val caps = hardwareCapabilities.detect(context)
 
         val optimalThreads = (caps.cpuCores * 0.7).toInt().coerceIn(1, caps.cpuCores)
@@ -39,7 +39,6 @@ class OptimalConfigurationService @Inject constructor(
         val useGpu = caps.hasVulkan && caps.gpuVramBytes > 512 * 1024 * 1024
 
         return ModelParameter(
-            modelId = modelId,
             temperature = 0.7f,
             topK = 40,
             topP = 0.95f,

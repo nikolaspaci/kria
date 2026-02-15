@@ -40,5 +40,52 @@ object DatabaseMigrations {
         }
     }
 
-    val ALL_MIGRATIONS = arrayOf(MIGRATION_2_3, MIGRATION_3_4)
+    val MIGRATION_6_7 = object : Migration(6, 7) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            // 1. Create models table
+            db.execSQL("""
+                CREATE TABLE IF NOT EXISTS models (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                    filePath TEXT NOT NULL,
+                    defaultParameterId INTEGER,
+                    pendingParameterId INTEGER
+                )
+            """)
+            db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS index_models_filePath ON models(filePath)")
+
+            // 2. Populate models from existing model_parameters
+            db.execSQL("""
+                INSERT OR IGNORE INTO models (filePath, defaultParameterId)
+                SELECT modelId, MIN(id)
+                FROM model_parameters
+                WHERE modelId != ''
+                GROUP BY modelId
+            """)
+
+            // 3. Recreate model_parameters without modelId column
+            db.execSQL("""
+                CREATE TABLE IF NOT EXISTS model_parameters_new (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                    temperature REAL NOT NULL,
+                    topK INTEGER NOT NULL,
+                    topP REAL NOT NULL,
+                    minP REAL NOT NULL,
+                    contextSize INTEGER NOT NULL,
+                    maxTokens INTEGER NOT NULL,
+                    threadCount INTEGER NOT NULL,
+                    repeatPenalty REAL NOT NULL,
+                    useGpu INTEGER NOT NULL
+                )
+            """)
+            db.execSQL("""
+                INSERT INTO model_parameters_new (id, temperature, topK, topP, minP, contextSize, maxTokens, threadCount, repeatPenalty, useGpu)
+                SELECT id, temperature, topK, topP, minP, contextSize, maxTokens, threadCount, repeatPenalty, useGpu
+                FROM model_parameters
+            """)
+            db.execSQL("DROP TABLE model_parameters")
+            db.execSQL("ALTER TABLE model_parameters_new RENAME TO model_parameters")
+        }
+    }
+
+    val ALL_MIGRATIONS = arrayOf(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_6_7)
 }

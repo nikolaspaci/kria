@@ -76,4 +76,12 @@ class ChatRepository(private val chatDao: ChatDao) {
     suspend fun getMessageCount(conversationId: Long): Int {
         return chatDao.getMessageCount(conversationId)
     }
+
+    suspend fun updateConversationModelParameterId(conversationId: Long, modelParameterId: Long) {
+        chatDao.updateConversationModelParameterId(conversationId, modelParameterId)
+    }
+
+    suspend fun getConversationModelParameterId(conversationId: Long): Long? {
+        return chatDao.getConversationModelParameterId(conversationId)
+    }
 }

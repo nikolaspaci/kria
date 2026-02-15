@@ -4,9 +4,11 @@ import android.content.Context
 import android.content.SharedPreferences
 import com.nikolaspaci.app.llamallmlocal.data.database.AppDatabase
 import com.nikolaspaci.app.llamallmlocal.data.database.ChatDao
+import com.nikolaspaci.app.llamallmlocal.data.database.ModelDao
 import com.nikolaspaci.app.llamallmlocal.data.database.ModelParameterDao
 import com.nikolaspaci.app.llamallmlocal.data.repository.ChatRepository
 import com.nikolaspaci.app.llamallmlocal.data.repository.ModelParameterRepository
+import com.nikolaspaci.app.llamallmlocal.data.repository.ModelRepository
 import com.nikolaspaci.app.llamallmlocal.engine.DefaultModelParameterProvider
 import com.nikolaspaci.app.llamallmlocal.engine.LlamaEngine
 import com.nikolaspaci.app.llamallmlocal.engine.ModelEngine
@@ -45,6 +47,11 @@ object AppModule {
     }
 
     @Provides
+    fun provideModelDao(database: AppDatabase): ModelDao {
+        return database.modelDao()
+    }
+
+    @Provides
     @Singleton
     fun provideChatRepository(chatDao: ChatDao): ChatRepository {
         return ChatRepository(chatDao)
@@ -54,6 +61,12 @@ object AppModule {
     @Singleton
     fun provideModelParameterRepository(dao: ModelParameterDao): ModelParameterRepository {
         return ModelParameterRepository(dao)
+    }
+
+    @Provides
+    @Singleton
+    fun provideModelRepository(dao: ModelDao): ModelRepository {
+        return ModelRepository(dao)
     }
 
     @Provides

@@ -63,6 +63,12 @@ interface ChatDao {
 
     @Query("UPDATE conversations SET title = :title WHERE id = :conversationId")
     suspend fun updateConversationTitle(conversationId: Long, title: String)
+
+    @Query("UPDATE conversations SET modelParameterId = :modelParameterId WHERE id = :conversationId")
+    suspend fun updateConversationModelParameterId(conversationId: Long, modelParameterId: Long)
+
+    @Query("SELECT modelParameterId FROM conversations WHERE id = :conversationId")
+    suspend fun getConversationModelParameterId(conversationId: Long): Long?
 }
 
 data class ConversationWithMessages(

@@ -5,14 +5,17 @@ import com.nikolaspaci.app.llamallmlocal.data.database.ChatMessage
 import com.nikolaspaci.app.llamallmlocal.data.database.Conversation
 import com.nikolaspaci.app.llamallmlocal.data.database.Sender
 import com.nikolaspaci.app.llamallmlocal.data.repository.ChatRepository
+import com.nikolaspaci.app.llamallmlocal.engine.ModelParameterProvider
 
 class HomeViewModel(
-    private val chatRepository: ChatRepository
+    private val chatRepository: ChatRepository,
+    private val parameterProvider: ModelParameterProvider
 ) : ViewModel() {
 
     suspend fun startNewConversation(modelPath: String, firstMessage: String): Long {
         val conversation = Conversation(modelPath = modelPath)
         val conversationId = chatRepository.insertConversation(conversation)
+        parameterProvider.ensureConversationParameters(conversationId, modelPath)
         val chatMessage = ChatMessage(
             conversationId = conversationId,
             sender = Sender.USER,

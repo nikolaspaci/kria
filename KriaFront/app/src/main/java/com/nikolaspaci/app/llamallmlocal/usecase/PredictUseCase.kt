@@ -10,8 +10,8 @@ class PredictUseCase @Inject constructor(
     private val engine: ModelEngine,
     private val parameterProvider: ModelParameterProvider
 ) {
-    suspend operator fun invoke(prompt: String, modelId: String): Flow<PredictionEvent> {
-        val parameters = parameterProvider.getParametersForModel(modelId)
+    suspend operator fun invoke(prompt: String, modelId: String, conversationId: Long): Flow<PredictionEvent> {
+        val parameters = parameterProvider.getParametersForConversation(conversationId, modelId)
         return engine.predict(prompt, parameters)
     }
 }

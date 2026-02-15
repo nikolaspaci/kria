@@ -51,9 +51,12 @@ sealed class Screen(val route: String) {
             return "chat/$conversationId"
         }
     }
-    object Settings : Screen("settings/{modelId}") {
+    object Settings : Screen("settings/{modelId}?conversationId={conversationId}") {
         fun createRoute(modelId: String): String {
             return "settings/${Uri.encode(modelId)}"
+        }
+        fun createRouteForConversation(modelId: String, conversationId: Long): String {
+            return "settings/${Uri.encode(modelId)}?conversationId=$conversationId"
         }
     }
     object HuggingFace : Screen("huggingface")
@@ -123,7 +126,17 @@ fun AppNavigation(factory: ViewModelFactory) {
         }
     ) {
         NavHost(navController = navController, startDestination = Screen.Home.route) {
-            composable(Screen.Home.route) {
+            composable(Screen.Home.route) { backStackEntry ->
+                val savedStateHandle = backStackEntry.savedStateHandle
+                val selectedModelFromSettings by savedStateHandle.getStateFlow<String?>("selected_model_path", null)
+                    .collectAsState()
+
+                LaunchedEffect(selectedModelFromSettings) {
+                    selectedModelFromSettings?.let {
+                        savedStateHandle.remove<String>("selected_model_path")
+                    }
+                }
+
                 HomeChatScreen(
                     homeViewModel = viewModel(factory = factory),
                     modelFileViewModel = modelFileViewModel,
@@ -135,7 +148,11 @@ fun AppNavigation(factory: ViewModelFactory) {
                     },
                     onNavigateToHuggingFace = {
                         navController.navigate(Screen.HuggingFace.route)
-                    }
+                    },
+                    onNavigateToSettings = { modelId ->
+                        navController.navigate(Screen.Settings.createRoute(modelId))
+                    },
+                    updatedModelPath = selectedModelFromSettings
                 )
             }
             composable(
@@ -156,6 +173,8 @@ fun AppNavigation(factory: ViewModelFactory) {
                     }
                 }
 
+                val conversationId = backStackEntry.arguments?.getLong("conversationId") ?: 0L
+
                 ChatScreen(
                     viewModel = chatViewModel,
                     onOpenDrawer = {
@@ -165,7 +184,7 @@ fun AppNavigation(factory: ViewModelFactory) {
                         navController.navigate(Screen.Home.route)
                     },
                     onNavigateToSettings = { modelId ->
-                        navController.navigate(Screen.Settings.createRoute(modelId))
+                        navController.navigate(Screen.Settings.createRouteForConversation(modelId, conversationId))
                     }
                 )
             }
@@ -183,12 +202,18 @@ fun AppNavigation(factory: ViewModelFactory) {
             composable(
                 route = Screen.Settings.route,
                 arguments = listOf(
-                    navArgument("modelId") { type = NavType.StringType }
+                    navArgument("modelId") { type = NavType.StringType },
+                    navArgument("conversationId") {
+                        type = NavType.LongType
+                        defaultValue = -1L
+                    }
                 )
             ) { backStackEntry ->
                 val modelId = backStackEntry.arguments?.getString("modelId") ?: ""
+                val settingsConversationId = backStackEntry.arguments?.getLong("conversationId") ?: -1L
                 SettingsScreen(
                     modelId = modelId,
+                    conversationId = if (settingsConversationId != -1L) settingsConversationId else null,
                     modelFileViewModel = modelFileViewModel,
                     onModelChanged = { newPath ->
                         navController.previousBackStackEntry?.savedStateHandle?.set("selected_model_path", newPath)

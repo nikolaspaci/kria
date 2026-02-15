@@ -6,14 +6,15 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 
 @Database(
-    entities = [Conversation::class, ChatMessage::class, ModelParameter::class],
-    version = 4,
+    entities = [Conversation::class, ChatMessage::class, ModelParameter::class, Model::class],
+    version = 7,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
 
     abstract fun chatDao(): ChatDao
     abstract fun modelParameterDao(): ModelParameterDao
+    abstract fun modelDao(): ModelDao
 
     companion object {
         @Volatile
@@ -27,6 +28,7 @@ abstract class AppDatabase : RoomDatabase() {
                     "chat_database"
                 )
                 .addMigrations(*DatabaseMigrations.ALL_MIGRATIONS)
+                .fallbackToDestructiveMigration()
                 .build()
                 INSTANCE = instance
                 instance

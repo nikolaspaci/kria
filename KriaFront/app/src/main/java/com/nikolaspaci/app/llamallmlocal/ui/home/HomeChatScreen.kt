@@ -12,6 +12,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -35,10 +36,19 @@ fun HomeChatScreen(
     modelFileViewModel: ModelFileViewModel,
     onStartChat: (Long) -> Unit,
     onOpenDrawer: () -> Unit,
-    onNavigateToHuggingFace: () -> Unit = {}
+    onNavigateToHuggingFace: () -> Unit = {},
+    onNavigateToSettings: ((String) -> Unit)? = null,
+    updatedModelPath: String? = null
 ) {
     var selectedModelPath by remember { mutableStateOf(modelFileViewModel.getModelPath() ?: "") }
     val scope = rememberCoroutineScope()
+
+    LaunchedEffect(updatedModelPath) {
+        updatedModelPath?.let { path ->
+            selectedModelPath = path
+            modelFileViewModel.saveModelPath(path)
+        }
+    }
 
     val displayModelName = if (selectedModelPath.isNotEmpty()) {
         File(selectedModelPath).nameWithoutExtension
@@ -48,7 +58,10 @@ fun HomeChatScreen(
         topBar = {
             AdaptiveTopBar(
                 modelName = displayModelName,
-                onOpenDrawer = onOpenDrawer
+                onOpenDrawer = onOpenDrawer,
+                onNavigateToSettings = if (selectedModelPath.isNotEmpty() && onNavigateToSettings != null) {
+                    { onNavigateToSettings(selectedModelPath) }
+                } else null
             )
         }
     ) { padding ->

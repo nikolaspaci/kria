@@ -133,7 +133,7 @@ class ChatViewModel @Inject constructor(
     }
 
     private suspend fun loadModel(path: String) {
-        val parameters = parameterProvider.getParametersForModel(path)
+        val parameters = parameterProvider.getParametersForConversation(conversationId, path)
         engine.loadModel(path, parameters)
     }
 
@@ -182,7 +182,7 @@ class ChatViewModel @Inject constructor(
                 modelName = getModelName()
             )
 
-            predictUseCase(prompt, _modelPath.value ?: "")
+            predictUseCase(prompt, _modelPath.value ?: "", conversationId)
                 .catch { e ->
                     _uiState.value = ChatUiState.Error(
                         message = e.message ?: "Erreur de prediction",
@@ -256,6 +256,7 @@ class ChatViewModel @Inject constructor(
     fun changeModel(newModelPath: String) {
         viewModelScope.launch {
             chatRepository.updateConversationModel(conversationId, newModelPath)
+            parameterProvider.ensureConversationParameters(conversationId, newModelPath)
         }
     }
 

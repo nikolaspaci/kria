@@ -3,8 +3,8 @@ package com.nikolaspaci.app.llamallmlocal.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.nikolaspaci.app.llamallmlocal.data.database.ModelParameter
-import com.nikolaspaci.app.llamallmlocal.data.repository.ModelParameterRepository
 import com.nikolaspaci.app.llamallmlocal.data.validation.ParameterValidator
+import com.nikolaspaci.app.llamallmlocal.engine.ModelParameterProvider
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,19 +24,34 @@ sealed class SettingsUiState {
 
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
-    private val repository: ModelParameterRepository
+    private val parameterProvider: ModelParameterProvider
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<SettingsUiState>(SettingsUiState.Loading)
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
 
-    private var modelId: String = ""
+    private var filePath: String = ""
+    private var currentParameterId: Long = 0L
+    private var isConversationMode: Boolean = false
+    private var conversationId: Long = -1L
 
-    fun loadParameters(modelId: String) {
-        this.modelId = modelId
+    fun loadParameters(filePath: String) {
+        this.filePath = filePath
+        this.isConversationMode = false
         viewModelScope.launch {
-            val params = repository.getModelParameter(modelId)
-                ?: ParameterValidator.getDefaultParameters(modelId)
+            val params = parameterProvider.getPendingOrDefaultParameters(filePath)
+            currentParameterId = params.id
+            _uiState.value = SettingsUiState.Ready(params)
+        }
+    }
+
+    fun loadParametersForConversation(conversationId: Long, filePath: String) {
+        this.filePath = filePath
+        this.conversationId = conversationId
+        this.isConversationMode = true
+        viewModelScope.launch {
+            val params = parameterProvider.getParametersForConversation(conversationId, filePath)
+            currentParameterId = params.id
             _uiState.value = SettingsUiState.Ready(params)
         }
     }
@@ -50,14 +65,21 @@ class SettingsViewModel @Inject constructor(
         val state = _uiState.value
         if (state is SettingsUiState.Ready && state.validationErrors.isEmpty()) {
             viewModelScope.launch {
-                repository.insert(state.parameters)
+                if (isConversationMode) {
+                    val toSave = state.parameters.copy(id = currentParameterId)
+                    parameterProvider.saveParameters(toSave)
+                } else {
+                    parameterProvider.savePendingParameters(filePath, state.parameters)
+                }
                 _uiState.value = SettingsUiState.Saved
             }
         }
     }
 
     fun resetToDefaults() {
-        val defaults = ParameterValidator.getDefaultParameters(modelId)
-        _uiState.value = SettingsUiState.Ready(defaults)
+        viewModelScope.launch {
+            val defaults = parameterProvider.getDefaultParameters(filePath)
+            _uiState.value = SettingsUiState.Ready(defaults.copy(id = currentParameterId))
+        }
     }
 }

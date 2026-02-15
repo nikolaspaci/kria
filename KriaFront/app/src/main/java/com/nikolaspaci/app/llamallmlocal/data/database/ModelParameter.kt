@@ -5,7 +5,7 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "model_parameters")
 data class ModelParameter(
-    @PrimaryKey val modelId: String,
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
     // Paramètres de sampling
     val temperature: Float = 0.8f,
     val topK: Int = 40,
