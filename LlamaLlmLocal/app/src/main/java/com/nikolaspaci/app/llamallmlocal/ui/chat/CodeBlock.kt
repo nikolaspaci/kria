@@ -16,7 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.rounded.ContentCopy
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -27,6 +27,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
@@ -53,11 +54,11 @@ fun CodeBlock(
         modifier = modifier.fillMaxWidth()
     ) {
         Column {
-            // Header avec langage et bouton copier
+            // Header with language label and copy button
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(syntaxColors.background.copy(alpha = 0.8f))
+                    .background(Color(0xFF1A1A1A))
                     .padding(horizontal = 12.dp, vertical = 6.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
@@ -73,8 +74,8 @@ fun CodeBlock(
                     modifier = Modifier.size(24.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Default.ContentCopy,
-                        contentDescription = "Copier",
+                        imageVector = Icons.Rounded.ContentCopy,
+                        contentDescription = "Copy code",
                         tint = syntaxColors.text.copy(alpha = 0.7f),
                         modifier = Modifier.size(16.dp)
                     )
@@ -86,7 +87,7 @@ fun CodeBlock(
                 thickness = 1.dp
             )
 
-            // Code avec scroll horizontal
+            // Code with horizontal scroll
             Box(
                 modifier = Modifier
                     .horizontalScroll(rememberScrollState())
@@ -108,5 +109,5 @@ private fun copyToClipboard(context: Context, text: String) {
     val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
     val clip = ClipData.newPlainText("code", text)
     clipboard.setPrimaryClip(clip)
-    Toast.makeText(context, "Code copie", Toast.LENGTH_SHORT).show()
+    Toast.makeText(context, "Code copied", Toast.LENGTH_SHORT).show()
 }

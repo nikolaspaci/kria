@@ -1,20 +1,70 @@
 package com.nikolaspaci.app.llamallmlocal.ui.common
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Menu
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
-
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberTopAppBarState
-import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.text.style.TextOverflow
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AdaptiveTopBar(
+    modelName: String = "",
+    onOpenDrawer: (() -> Unit)? = null,
+    onNavigateBack: (() -> Unit)? = null,
+    onNewChat: (() -> Unit)? = null,
+    onNavigateToSettings: (() -> Unit)? = null,
+) {
+    CenterAlignedTopAppBar(
+        title = {
+            if (modelName.isNotEmpty()) {
+                Text(
+                    text = modelName,
+                    style = MaterialTheme.typography.titleSmall,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        },
+        navigationIcon = {
+            if (onNavigateBack != null) {
+                IconButton(onClick = onNavigateBack) {
+                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "Back")
+                }
+            } else if (onOpenDrawer != null) {
+                IconButton(onClick = onOpenDrawer) {
+                    Icon(Icons.Rounded.Menu, contentDescription = "Menu")
+                }
+            }
+        },
+        actions = {
+            if (onNewChat != null) {
+                IconButton(onClick = onNewChat) {
+                    Icon(Icons.Rounded.Add, contentDescription = "New chat")
+                }
+            }
+            if (onNavigateToSettings != null) {
+                IconButton(onClick = onNavigateToSettings) {
+                    Icon(Icons.Rounded.Settings, contentDescription = "Settings")
+                }
+            }
+        },
+        colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+            containerColor = MaterialTheme.colorScheme.background
+        )
+    )
+}
+
+// Keep old name for any remaining references
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AppTopAppBar(
@@ -23,26 +73,10 @@ fun AppTopAppBar(
     onNavigateBack: (() -> Unit)? = null,
     onNavigateToSettings: (() -> Unit)? = null,
 ) {
-    TopAppBar(
-        title = { Text(title) },
-        navigationIcon = {
-            if (onNavigateBack != null) {
-                IconButton(onClick = onNavigateBack) {
-                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                }
-            } else if (onOpenDrawer != null) {
-                IconButton(onClick = onOpenDrawer) {
-                    Icon(Icons.Default.Menu, contentDescription = "Menu")
-                }
-            }
-        },
-        actions = {
-            if (onNavigateToSettings != null) {
-                IconButton(onClick = onNavigateToSettings) {
-                    Icon(Icons.Default.Settings, contentDescription = "Settings")
-                }
-            }
-        }
+    AdaptiveTopBar(
+        modelName = title,
+        onOpenDrawer = onOpenDrawer,
+        onNavigateBack = onNavigateBack,
+        onNavigateToSettings = onNavigateToSettings
     )
 }
-                                                                                                                                                             

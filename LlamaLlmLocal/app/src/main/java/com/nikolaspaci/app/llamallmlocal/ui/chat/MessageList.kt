@@ -2,11 +2,9 @@ package com.nikolaspaci.app.llamallmlocal.ui.chat
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -32,6 +30,8 @@ fun MessageList(
     streamingState: StreamingState?,
     lastMessageStats: Stats?,
     onCancelGeneration: () -> Unit,
+    onCopyMessage: ((String) -> Unit)? = null,
+    onRegenerateResponse: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     val listState = rememberLazyListState()
@@ -76,7 +76,7 @@ fun MessageList(
         state = listState,
         modifier = modifier,
         contentPadding = PaddingValues(vertical = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         itemsIndexed(
             items = messages,
@@ -86,34 +86,21 @@ fun MessageList(
                                    message.sender == Sender.BOT &&
                                    streamingState == null
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 8.dp),
-                horizontalArrangement = if (message.sender == Sender.USER)
-                    Arrangement.End else Arrangement.Start
-            ) {
-                MessageRow(
-                    message = message,
-                    stats = if (isLastBotMessage) lastMessageStats else null
-                )
-            }
+            MessageRow(
+                message = message,
+                stats = if (isLastBotMessage) lastMessageStats else null,
+                onCopyMessage = onCopyMessage,
+                onRegenerateMessage = if (isLastBotMessage) onRegenerateResponse else null
+            )
         }
 
         if (streamingState != null) {
             item(key = "streaming") {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 8.dp),
-                    horizontalArrangement = Arrangement.Start
-                ) {
-                    StreamingMessageBubble(
-                        text = streamingState.currentText,
-                        tokensGenerated = streamingState.tokensGenerated,
-                        onCancel = onCancelGeneration
-                    )
-                }
+                StreamingMessageBubble(
+                    text = streamingState.currentText,
+                    tokensGenerated = streamingState.tokensGenerated,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
         }
 

@@ -18,29 +18,29 @@ data class SyntaxColors(
 )
 
 val DarkSyntaxColors = SyntaxColors(
-    keyword = Color(0xFFCC7832),      // Orange
-    string = Color(0xFF6A8759),       // Vert
-    number = Color(0xFF6897BB),       // Bleu
-    comment = Color(0xFF808080),      // Gris
-    function = Color(0xFFFFC66D),     // Jaune
-    type = Color(0xFF4EC9B0),         // Cyan
-    operator = Color(0xFFA9B7C6),     // Gris clair
-    variable = Color(0xFF9876AA),     // Violet
-    background = Color(0xFF2B2B2B),   // Fond sombre
-    text = Color(0xFFA9B7C6)          // Texte clair
+    keyword = Color(0xFFCC7832),
+    string = Color(0xFF6A8759),
+    number = Color(0xFF6897BB),
+    comment = Color(0xFF808080),
+    function = Color(0xFFFFC66D),
+    type = Color(0xFF4EC9B0),
+    operator = Color(0xFFA9B7C6),
+    variable = Color(0xFF9876AA),
+    background = Color(0xFF0D0D0D),
+    text = Color(0xFFA9B7C6)
 )
 
 val LightSyntaxColors = SyntaxColors(
-    keyword = Color(0xFF0000FF),      // Bleu
-    string = Color(0xFF008000),       // Vert
-    number = Color(0xFF098658),       // Vert fonce
-    comment = Color(0xFF808080),      // Gris
-    function = Color(0xFF795E26),     // Marron
-    type = Color(0xFF267F99),         // Cyan fonce
-    operator = Color(0xFF000000),     // Noir
-    variable = Color(0xFF001080),     // Bleu fonce
-    background = Color(0xFFF5F5F5),   // Fond clair
-    text = Color(0xFF000000)          // Texte noir
+    keyword = Color(0xFF0000FF),
+    string = Color(0xFF008000),
+    number = Color(0xFF098658),
+    comment = Color(0xFF808080),
+    function = Color(0xFF795E26),
+    type = Color(0xFF267F99),
+    operator = Color(0xFF000000),
+    variable = Color(0xFF001080),
+    background = Color(0xFF1E1E1E),
+    text = Color(0xFFA9B7C6)
 )
 
 @Composable

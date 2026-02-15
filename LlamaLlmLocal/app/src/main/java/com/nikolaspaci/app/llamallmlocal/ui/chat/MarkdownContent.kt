@@ -8,6 +8,8 @@ import androidx.compose.ui.text.font.FontFamily
 import com.mikepenz.markdown.m3.Markdown
 import com.mikepenz.markdown.m3.markdownColor
 import com.mikepenz.markdown.m3.markdownTypography
+import com.nikolaspaci.app.llamallmlocal.ui.theme.ChatCodeBlockBg
+import com.nikolaspaci.app.llamallmlocal.ui.theme.ChatWhite
 
 @Composable
 fun MarkdownContent(
@@ -18,8 +20,8 @@ fun MarkdownContent(
         content = content,
         colors = markdownColor(
             text = MaterialTheme.colorScheme.onSurface,
-            codeText = MaterialTheme.colorScheme.onSurfaceVariant,
-            codeBackground = MaterialTheme.colorScheme.surfaceVariant,
+            codeText = ChatWhite,
+            codeBackground = ChatCodeBlockBg,
             linkText = MaterialTheme.colorScheme.primary,
             dividerColor = MaterialTheme.colorScheme.outline
         ),

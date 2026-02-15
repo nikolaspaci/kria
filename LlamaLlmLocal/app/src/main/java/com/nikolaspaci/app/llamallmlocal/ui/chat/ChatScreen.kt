@@ -1,14 +1,18 @@
 package com.nikolaspaci.app.llamallmlocal.ui.chat
 
-import androidx.compose.foundation.layout.Column
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -17,10 +21,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.nikolaspaci.app.llamallmlocal.ui.common.AppTopAppBar
-import com.nikolaspaci.app.llamallmlocal.ui.common.MessageInput
+import com.nikolaspaci.app.llamallmlocal.ui.common.AdaptiveTopBar
+import com.nikolaspaci.app.llamallmlocal.ui.common.SmartChatInput
 import com.nikolaspaci.app.llamallmlocal.viewmodel.ChatUiState
 import com.nikolaspaci.app.llamallmlocal.viewmodel.ChatViewModel
 import java.io.File
@@ -30,11 +34,14 @@ import java.io.File
 fun ChatScreen(
     viewModel: ChatViewModel,
     onOpenDrawer: () -> Unit,
+    onNewChat: () -> Unit,
     onNavigateToSettings: (String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var selectedModelPath by remember { mutableStateOf("") }
     val viewModelModelPath by viewModel.currentModelPath.collectAsState()
+    val context = LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(viewModelModelPath) {
         viewModelModelPath?.let { path ->
@@ -44,7 +51,6 @@ fun ChatScreen(
         }
     }
 
-    // Update selectedModelPath from uiState model name context
     val currentModelName = when (val state = uiState) {
         is ChatUiState.Ready -> state.modelName
         is ChatUiState.Generating -> state.modelName
@@ -52,6 +58,10 @@ fun ChatScreen(
         is ChatUiState.ModelLoading -> state.modelName
         else -> ""
     }
+
+    val displayModelName = if (currentModelName.isNotEmpty()) {
+        File(currentModelName).nameWithoutExtension
+    } else ""
 
     val isGenerating = uiState is ChatUiState.Generating
     val isModelReady = uiState is ChatUiState.Ready ||
@@ -61,22 +71,28 @@ fun ChatScreen(
     Scaffold(
         modifier = Modifier.imePadding(),
         topBar = {
-            AppTopAppBar(
-                title = "",
+            AdaptiveTopBar(
+                modelName = displayModelName,
                 onOpenDrawer = onOpenDrawer,
+                onNewChat = onNewChat,
                 onNavigateToSettings = {
                     onNavigateToSettings(selectedModelPath)
                 }
             )
         },
         bottomBar = {
-            Column(modifier = Modifier.padding(8.dp)) {
-                MessageInput(
-                    onSendMessage = { viewModel.sendMessage(it) },
-                    isEnabled = isModelReady && !isGenerating
-                )
-            }
-        }
+            SmartChatInput(
+                onSendMessage = { viewModel.sendMessage(it) },
+                isEnabled = isModelReady,
+                isGenerating = isGenerating,
+                onStopGeneration = { viewModel.cancelPrediction() },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 8.dp)
+                    .navigationBarsPadding()
+            )
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
         when (val state = uiState) {
             is ChatUiState.Idle -> {
@@ -84,7 +100,7 @@ fun ChatScreen(
             }
 
             is ChatUiState.ModelLoading -> {
-                LoadingScreen(
+                ModelLoadingOverlay(
                     modelName = state.modelName,
                     progress = state.progress,
                     modifier = Modifier.padding(paddingValues)
@@ -92,67 +108,86 @@ fun ChatScreen(
             }
 
             is ChatUiState.Ready -> {
-                Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-                    ModelNameHeader(currentModelName)
+                if (state.messages.isEmpty()) {
+                    EmptyChatState(
+                        modelName = currentModelName,
+                        modifier = Modifier.padding(paddingValues)
+                    )
+                } else {
                     MessageList(
                         messages = state.messages,
                         streamingState = null,
                         lastMessageStats = null,
                         onCancelGeneration = {},
-                        modifier = Modifier.fillMaxWidth().weight(1f)
+                        onCopyMessage = { text -> copyToClipboard(context, text) },
+                        onRegenerateResponse = { viewModel.retry() },
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(paddingValues)
                     )
                 }
             }
 
             is ChatUiState.Generating -> {
-                Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-                    ModelNameHeader(currentModelName)
-                    MessageList(
-                        messages = state.messages,
-                        streamingState = StreamingState(
-                            currentText = state.currentResponse,
-                            tokensGenerated = state.tokensGenerated
-                        ),
-                        lastMessageStats = null,
-                        onCancelGeneration = { viewModel.cancelPrediction() },
-                        modifier = Modifier.fillMaxWidth().weight(1f)
-                    )
-                }
+                MessageList(
+                    messages = state.messages,
+                    streamingState = StreamingState(
+                        currentText = state.currentResponse,
+                        tokensGenerated = state.tokensGenerated
+                    ),
+                    lastMessageStats = null,
+                    onCancelGeneration = { viewModel.cancelPrediction() },
+                    onCopyMessage = { text -> copyToClipboard(context, text) },
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                )
             }
 
             is ChatUiState.MessageComplete -> {
-                Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-                    ModelNameHeader(currentModelName)
-                    MessageList(
-                        messages = state.messages,
-                        streamingState = null,
-                        lastMessageStats = state.stats,
-                        onCancelGeneration = {},
-                        modifier = Modifier.fillMaxWidth().weight(1f)
-                    )
-                }
+                MessageList(
+                    messages = state.messages,
+                    streamingState = null,
+                    lastMessageStats = state.stats,
+                    onCancelGeneration = {},
+                    onCopyMessage = { text -> copyToClipboard(context, text) },
+                    onRegenerateResponse = { viewModel.retry() },
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                )
             }
 
             is ChatUiState.Error -> {
-                ErrorScreen(
-                    message = state.message,
-                    onRetry = if (state.canRetry) {{ viewModel.retry() }} else null,
-                    modifier = Modifier.padding(paddingValues)
-                )
+                if (state.previousMessages != null && state.previousMessages.isNotEmpty()) {
+                    // Show messages + snackbar for recoverable errors
+                    Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+                        MessageList(
+                            messages = state.previousMessages,
+                            streamingState = null,
+                            lastMessageStats = null,
+                            onCancelGeneration = {},
+                            onCopyMessage = { text -> copyToClipboard(context, text) },
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+                    LaunchedEffect(state.message) {
+                        snackbarHostState.showSnackbar(state.message)
+                    }
+                } else {
+                    ErrorScreen(
+                        message = state.message,
+                        onRetry = if (state.canRetry) {{ viewModel.retry() }} else null,
+                        modifier = Modifier.padding(paddingValues)
+                    )
+                }
             }
         }
     }
 }
 
-@Composable
-private fun ModelNameHeader(modelName: String) {
-    if (modelName.isNotEmpty()) {
-        Text(
-            text = File(modelName).name,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-            textAlign = TextAlign.Center
-        )
-    }
+private fun copyToClipboard(context: Context, text: String) {
+    val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+    val clip = ClipData.newPlainText("message", text)
+    clipboard.setPrimaryClip(clip)
 }

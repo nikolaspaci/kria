@@ -4,8 +4,11 @@ import android.net.Uri
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
@@ -72,9 +75,18 @@ fun AppNavigation(factory: ViewModelFactory) {
     ModalNavigationDrawer(
         drawerState = drawerState,
         drawerContent = {
-            ModalDrawerSheet {
+            ModalDrawerSheet(
+                drawerContainerColor = MaterialTheme.colorScheme.surface,
+                drawerContentColor = MaterialTheme.colorScheme.onSurface
+            ) {
                 Column {
                     NavigationDrawerItem(
+                        icon = {
+                            Icon(
+                                Icons.Rounded.Add,
+                                contentDescription = null
+                            )
+                        },
                         label = { Text("New Chat") },
                         selected = navController.currentDestination?.route == Screen.Home.route,
                         onClick = {
@@ -85,7 +97,8 @@ fun AppNavigation(factory: ViewModelFactory) {
                     HorizontalDivider()
                     Text(
                         text = "Chats",
-                        style = MaterialTheme.typography.titleMedium,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(16.dp)
                     )
                     val searchQuery by historyViewModel.searchQuery.collectAsState()
@@ -147,6 +160,9 @@ fun AppNavigation(factory: ViewModelFactory) {
                     viewModel = chatViewModel,
                     onOpenDrawer = {
                         scope.launch { drawerState.open() }
+                    },
+                    onNewChat = {
+                        navController.navigate(Screen.Home.route)
                     },
                     onNavigateToSettings = { modelId ->
                         navController.navigate(Screen.Settings.createRoute(modelId))

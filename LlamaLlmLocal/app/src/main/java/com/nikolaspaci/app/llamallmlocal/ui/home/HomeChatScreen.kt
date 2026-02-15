@@ -7,10 +7,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -22,14 +20,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.res.stringResource
-import com.nikolaspaci.app.llamallmlocal.R
-import com.nikolaspaci.app.llamallmlocal.ui.common.AppTopAppBar
-import com.nikolaspaci.app.llamallmlocal.ui.common.MessageInput
+import com.nikolaspaci.app.llamallmlocal.ui.common.AdaptiveTopBar
+import com.nikolaspaci.app.llamallmlocal.ui.common.SmartChatInput
 import com.nikolaspaci.app.llamallmlocal.ui.common.ModelSelector
 import com.nikolaspaci.app.llamallmlocal.viewmodel.HomeViewModel
 import com.nikolaspaci.app.llamallmlocal.viewmodel.ModelFileViewModel
 import kotlinx.coroutines.launch
+import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,10 +40,14 @@ fun HomeChatScreen(
     var selectedModelPath by remember { mutableStateOf(modelFileViewModel.getModelPath() ?: "") }
     val scope = rememberCoroutineScope()
 
+    val displayModelName = if (selectedModelPath.isNotEmpty()) {
+        File(selectedModelPath).nameWithoutExtension
+    } else ""
+
     Scaffold(
         topBar = {
-            AppTopAppBar(
-                title = "",
+            AdaptiveTopBar(
+                modelName = displayModelName,
                 onOpenDrawer = onOpenDrawer
             )
         }
@@ -65,8 +66,7 @@ fun HomeChatScreen(
                 modifier = Modifier.padding(bottom = 16.dp)
             )
 
-
-            MessageInput(
+            SmartChatInput(
                 onSendMessage = { userInput ->
                     if (selectedModelPath.isNotEmpty()) {
                         scope.launch {
@@ -75,7 +75,10 @@ fun HomeChatScreen(
                         }
                     }
                 },
-                isEnabled = selectedModelPath.isNotEmpty()
+                isEnabled = selectedModelPath.isNotEmpty(),
+                isGenerating = false,
+                onStopGeneration = {},
+                modifier = Modifier.fillMaxWidth()
             )
             Spacer(modifier = Modifier.height(16.dp))
             ModelSelector(
