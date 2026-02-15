@@ -16,16 +16,16 @@ This project provides a complete, high-performance solution for running GGUF-for
 
 The project is a monorepo composed of two main subprojects:
 
-1.  `llamaCpp`: A C++ project that acts as the JNI (Java Native Interface) bridge. It includes `llama.cpp` as a submodule and compiles the core logic into shared native libraries (`.so` files) that the Android app can load.
-2.  `LlamaLlmLocal`: A standard Android application written in Kotlin. It contains all the UI (Jetpack Compose), application logic (ViewModels), database management (Room), and the JNI declarations to communicate with the native layer.
+1.  `KriaCpp`: A C++ project that acts as the JNI (Java Native Interface) bridge. It includes `llama.cpp` as a submodule and compiles the core logic into shared native libraries (`.so` files) that the Android app can load.
+2.  `KriaFront`: A standard Android application written in Kotlin. It contains all the UI (Jetpack Compose), application logic (ViewModels), database management (Room), and the JNI declarations to communicate with the native layer.
 
 ---
 
 ## How It Works: Dynamic Library Loading
 
 To maximize performance, the project compiles two distinct versions of the native library for the `arm64-v8a` architecture, each targeting a different instruction set:
-- `libjniLlamaCppWrapper_armv9-a.so`: Optimized for modern ARMv9 CPUs.
-- `libjniLlamaCppWrapper_v82a.so`: A more compatible version for older ARMv8.2 CPUs.
+- `libjniKriaCppWrapper_armv9-a.so`: Optimized for modern ARMv9 CPUs.
+- `libjniKriaCppWrapper_v82a.so`: A more compatible version for older ARMv8.2 CPUs.
 
 The application intelligently loads the best library at runtime. It first attempts to load the `v9-a` library. If an `UnsatisfiedLinkError` occurs (which happens if the device's CPU does not support the required instructions), it gracefully falls back to the more compatible `v8.2-a` library. This ensures maximum performance on capable devices without sacrificing compatibility.
 
@@ -51,11 +51,11 @@ The application intelligently loads the best library at runtime. It first attemp
 
 2.  **Open the Android Project**
     - Open Android Studio.
-    - Select "Open" and navigate to the `LlamaLlmLocal` directory inside the cloned repository.
+    - Select "Open" and navigate to the `KriaFront` directory inside the cloned repository.
 
 3.  **Sync and Build**
     - Android Studio will automatically detect the Gradle project and start the sync process.
-    - The Android Gradle plugin is configured to trigger the CMake build for the `llamaCpp` subproject. It will compile the native libraries for all targeted ABIs.
+    - The Android Gradle plugin is configured to trigger the CMake build for the `KriaCpp` subproject. It will compile the native libraries for all targeted ABIs.
     - Once the Gradle sync is complete, you can build and run the application on a connected Android device or emulator.
 
 ## Usage

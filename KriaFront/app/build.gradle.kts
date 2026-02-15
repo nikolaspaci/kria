@@ -55,7 +55,7 @@ android {
     }
     externalNativeBuild {
         cmake {
-            path = file("../../llamaCpp/CMakeLists.txt")
+            path = file("../../KriaCpp/CMakeLists.txt")
             version = "3.22.1"
         }
     }

@@ -11,7 +11,7 @@ import androidx.core.view.WindowCompat
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import com.nikolaspaci.app.llamallmlocal.ui.AppNavigation
-import com.nikolaspaci.app.llamallmlocal.ui.theme.LlamaLLmLocalTheme
+import com.nikolaspaci.app.llamallmlocal.ui.theme.KriaTheme
 import com.nikolaspaci.app.llamallmlocal.viewmodel.ViewModelFactory
  
 import com.nikolaspaci.app.llamallmlocal.jni.LlamaJniService
@@ -29,7 +29,7 @@ class MainActivity : ComponentActivity() {
         })
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {
-            LlamaLLmLocalTheme {
+            KriaTheme {
                 // A surface container using the 'background' color from the theme
                 Surface(
                     modifier = Modifier.fillMaxSize(),

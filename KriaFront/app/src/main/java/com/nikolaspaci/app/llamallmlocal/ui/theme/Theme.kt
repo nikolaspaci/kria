@@ -61,7 +61,7 @@ val AppShapes = Shapes(
 )
 
 @Composable
-fun LlamaLLmLocalTheme(
+fun KriaTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit
 ) {

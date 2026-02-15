@@ -19,5 +19,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "LlamaLlmLocal"
+rootProject.name = "KriaFront"
 include(":app")

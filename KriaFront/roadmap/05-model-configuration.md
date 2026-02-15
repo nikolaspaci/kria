@@ -687,8 +687,8 @@ session->sparams.penalty_repeat = repeatPenalty;
 | `data/database/AppDatabase.kt` | Version 4 |
 | `ui/settings/SettingsScreen.kt` | Refactoring complet |
 | `viewmodel/SettingsViewModel.kt` | Validation |
-| `llamaCpp/src/JNIMethods/InitJni.cpp` | Lire nouveaux params |
-| `llamaCpp/src/JNIMethods/PredictJni.cpp` | maxTokens, repeatPenalty |
+| `KriaCpp/src/JNIMethods/InitJni.cpp` | Lire nouveaux params |
+| `KriaCpp/src/JNIMethods/PredictJni.cpp` | maxTokens, repeatPenalty |
 
 ---
 

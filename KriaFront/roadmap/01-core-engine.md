@@ -19,7 +19,7 @@ modelFileViewModel.saveModelPath(it)
 ```
 
 ### Bug 2: PredictJni.cpp (ligne 190)
-**Fichier**: `llamaCpp/src/JNIMethods/PredictJni.cpp`
+**Fichier**: `KriaCpp/src/JNIMethods/PredictJni.cpp`
 
 ```cpp
 // SUPPRIMER cette ligne (double appel):

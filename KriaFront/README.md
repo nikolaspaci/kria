@@ -1,4 +1,4 @@
-# LlamaLlmLocal
+# KriaFront
 
 Application Android de chat avec des modeles LLM locaux au format GGUF, utilisant llama.cpp via JNI.
 

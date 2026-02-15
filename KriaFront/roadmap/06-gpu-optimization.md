@@ -28,7 +28,7 @@ if(ANDROID)
             add_definitions(-DGGML_USE_VULKAN)
 
             # Lier la bibliothèque
-            target_link_libraries(jniLlamaCppWrapper ${VULKAN_LIB})
+            target_link_libraries(jniKriaCppWrapper ${VULKAN_LIB})
         else()
             message(WARNING "Vulkan library not found - GPU acceleration disabled")
             set(GGML_VULKAN OFF CACHE BOOL "Disable Vulkan backend" FORCE)
@@ -58,7 +58,7 @@ android {
 
 ## 2. Méthodes JNI pour Hardware Info
 
-### Fichier à créer: `llamaCpp/src/JNIMethods/HardwareInfoJni.cpp`
+### Fichier à créer: `KriaCpp/src/JNIMethods/HardwareInfoJni.cpp`
 
 ```cpp
 #include <jni.h>
@@ -141,7 +141,7 @@ Java_com_nikolaspaci_app_llamallmlocal_LlamaApi_getVulkanVramBytes(
 } // extern "C"
 ```
 
-### Header: `llamaCpp/include/JNIMethods/HardwareInfoJni.hpp`
+### Header: `KriaCpp/include/JNIMethods/HardwareInfoJni.hpp`
 
 ```cpp
 #ifndef HARDWARE_INFO_JNI_HPP
@@ -801,8 +801,8 @@ object HardwareModule {
 ### Fichiers à Créer (C++)
 | Fichier | Description |
 |---------|-------------|
-| `llamaCpp/src/JNIMethods/HardwareInfoJni.cpp` | Méthodes JNI pour hardware |
-| `llamaCpp/include/JNIMethods/HardwareInfoJni.hpp` | Header |
+| `KriaCpp/src/JNIMethods/HardwareInfoJni.cpp` | Méthodes JNI pour hardware |
+| `KriaCpp/include/JNIMethods/HardwareInfoJni.hpp` | Header |
 
 ### Fichiers à Créer (Kotlin)
 | Fichier | Description |
@@ -815,7 +815,7 @@ object HardwareModule {
 ### Fichiers à Modifier
 | Fichier | Modification |
 |---------|--------------|
-| `llamaCpp/CMakeLists.txt` | Activer Vulkan |
+| `KriaCpp/CMakeLists.txt` | Activer Vulkan |
 | `app/build.gradle.kts` | Args CMake |
 | `LlamaApi.kt` | Nouvelles méthodes JNI |
 | `di/AppModule.kt` | Module hardware |
