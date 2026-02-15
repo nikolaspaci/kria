@@ -19,7 +19,7 @@ interface ModelEngine {
     suspend fun loadModel(modelPath: String, parameters: ModelParameter): Result<Unit>
     suspend fun unloadModel(): Result<Unit>
     fun predict(prompt: String, parameters: ModelParameter): Flow<PredictionEvent>
-    suspend fun restoreHistory(messages: List<ChatMessage>)
+    suspend fun restoreHistory(messages: List<ChatMessage>, systemPrompt: String = "")
     fun isModelLoaded(): Boolean
     fun getCurrentModelPath(): String?
 }

@@ -16,7 +16,8 @@ data class ModelParameter(
     val maxTokens: Int = 256,
     val threadCount: Int = 4,
     val repeatPenalty: Float = 1.1f,
-    val useGpu: Boolean = false
+    val useGpu: Boolean = false,
+    val systemPrompt: String = ""
 ) {
     companion object {
         // Limites de validation
@@ -27,6 +28,8 @@ data class ModelParameter(
         val CONTEXT_SIZE_VALUES = listOf(512, 1024, 2048, 4096, 8192)
         val MAX_TOKENS_RANGE = 64..2048
         val REPEAT_PENALTY_RANGE = 1f..2f
+
+        const val SYSTEM_PROMPT_MAX_LENGTH = 4096
 
         fun getMaxThreads(): Int = Runtime.getRuntime().availableProcessors()
     }

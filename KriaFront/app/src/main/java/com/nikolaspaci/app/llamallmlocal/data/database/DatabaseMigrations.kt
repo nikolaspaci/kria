@@ -87,5 +87,19 @@ object DatabaseMigrations {
         }
     }
 
-    val ALL_MIGRATIONS = arrayOf(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_6_7)
+    val MIGRATION_7_8 = object : Migration(7, 8) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE model_parameters ADD COLUMN systemPrompt TEXT NOT NULL DEFAULT ''")
+            db.execSQL("""
+                CREATE TABLE IF NOT EXISTS system_prompt_presets (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                    name TEXT NOT NULL,
+                    prompt TEXT NOT NULL,
+                    createdAt INTEGER NOT NULL DEFAULT 0
+                )
+            """)
+        }
+    }
+
+    val ALL_MIGRATIONS = arrayOf(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_6_7, MIGRATION_7_8)
 }

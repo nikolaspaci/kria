@@ -62,9 +62,9 @@ object LlamaJniService {
         }
     }
 
-    fun restoreHistory(messages: Array<ChatMessage>) {
+    fun restoreHistory(messages: Array<ChatMessage>, systemPrompt: String = "") {
         if (sessionPtr != 0L) {
-            LlamaApi.restoreHistory(sessionPtr, messages)
+            LlamaApi.restoreHistory(sessionPtr, messages, systemPrompt)
         }
     }
 }

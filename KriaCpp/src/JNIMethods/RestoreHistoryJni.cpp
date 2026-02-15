@@ -9,7 +9,8 @@ Java_com_nikolaspaci_app_llamallmlocal_LlamaApi_restoreHistory(
     JNIEnv *env,
     jobject /* this */,
     jlong session_ptr,
-    jobjectArray messages
+    jobjectArray messages,
+    jstring systemPrompt_j
 ) {
     LlamaSession* session = reinterpret_cast<LlamaSession*>(session_ptr);
     if (!session) {
@@ -17,6 +18,14 @@ Java_com_nikolaspaci_app_llamallmlocal_LlamaApi_restoreHistory(
     }
 
     session->messages.clear();
+
+    // Inject system prompt as the first message if non-empty
+    const char* sp = env->GetStringUTFChars(systemPrompt_j, nullptr);
+    std::string systemPromptStr(sp);
+    env->ReleaseStringUTFChars(systemPrompt_j, sp);
+    if (!systemPromptStr.empty()) {
+        session->messages.push_back({strdup("system"), strdup(systemPromptStr.c_str())});
+    }
 
     jsize message_count = env->GetArrayLength(messages);
     for (jsize i = 0; i < message_count; ++i) {

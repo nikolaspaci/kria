@@ -45,6 +45,10 @@ object ParameterValidator {
             errors["repeatPenalty"] = "Must be between ${ModelParameter.REPEAT_PENALTY_RANGE.start} and ${ModelParameter.REPEAT_PENALTY_RANGE.endInclusive}"
         }
 
+        if (params.systemPrompt.length > ModelParameter.SYSTEM_PROMPT_MAX_LENGTH) {
+            errors["systemPrompt"] = "Must be at most ${ModelParameter.SYSTEM_PROMPT_MAX_LENGTH} characters"
+        }
+
         return ValidationResult(errors.isEmpty(), errors)
     }
 

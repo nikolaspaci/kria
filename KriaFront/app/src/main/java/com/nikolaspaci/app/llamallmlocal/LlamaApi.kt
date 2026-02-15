@@ -32,7 +32,7 @@ object LlamaApi {
     external fun init(modelPath: String, modelParameters: ModelParameter): Long
     external fun free(sessionPtr: Long)
     external fun predict(sessionPtr: Long, prompt: String, modelParameters: ModelParameter, callback: PredictCallback)
-    external fun restoreHistory(sessionPtr: Long, messages: Array<ChatMessage>)
+    external fun restoreHistory(sessionPtr: Long, messages: Array<ChatMessage>, systemPrompt: String)
 
     // Hardware info methods
     external fun isVulkanAvailable(): Boolean

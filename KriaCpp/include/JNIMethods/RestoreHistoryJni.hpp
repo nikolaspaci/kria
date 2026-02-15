@@ -8,7 +8,8 @@ Java_com_nikolaspaci_app_llamallmlocal_LlamaApi_restoreHistory(
     JNIEnv *env,
     jobject /* this */,
     jlong session_ptr,
-    jobjectArray messages
+    jobjectArray messages,
+    jstring systemPrompt
 );
 
 #endif // RESTOREHISTORYJNI_HPP

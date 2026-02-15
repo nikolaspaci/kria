@@ -25,6 +25,7 @@ class LlamaEngine @Inject constructor() : ModelEngine {
 
     private var sessionPtr: Long = 0
     private var currentModelPath: String? = null
+    private var currentSystemPrompt: String = ""
     private val mutex = Mutex()
 
     private val _loadState = MutableStateFlow<ModelEngine.LoadState>(ModelEngine.LoadState.Idle)
@@ -53,6 +54,7 @@ class LlamaEngine @Inject constructor() : ModelEngine {
                     Result.failure(IllegalStateException("Model loading failed"))
                 } else {
                     currentModelPath = modelPath
+                    currentSystemPrompt = parameters.systemPrompt
                     _loadState.value = ModelEngine.LoadState.Loaded(modelName)
                     Result.success(Unit)
                 }
@@ -109,11 +111,12 @@ class LlamaEngine @Inject constructor() : ModelEngine {
         awaitClose { }
     }.flowOn(Dispatchers.IO)
 
-    override suspend fun restoreHistory(messages: List<ChatMessage>) {
+    override suspend fun restoreHistory(messages: List<ChatMessage>, systemPrompt: String) {
         if (sessionPtr == 0L) return
 
+        val prompt = systemPrompt.ifEmpty { currentSystemPrompt }
         withContext(Dispatchers.IO) {
-            LlamaApi.restoreHistory(sessionPtr, messages.toTypedArray())
+            LlamaApi.restoreHistory(sessionPtr, messages.toTypedArray(), prompt)
         }
     }
 

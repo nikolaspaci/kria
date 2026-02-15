@@ -49,6 +49,8 @@ Java_com_nikolaspaci_app_llamallmlocal_LlamaApi_predict(
     jfieldID maxTokensField = env->GetFieldID(modelParamsClass, "maxTokens", "I");
     jfieldID repeatPenaltyField = env->GetFieldID(modelParamsClass, "repeatPenalty", "F");
 
+    jfieldID systemPromptField = env->GetFieldID(modelParamsClass, "systemPrompt", "Ljava/lang/String;");
+
     // Get the values from the modelParameters object
     jfloat temperature = env->GetFloatField(modelParameters, temperatureField);
     jint topK = env->GetIntField(modelParameters, topKField);
@@ -56,6 +58,15 @@ Java_com_nikolaspaci_app_llamallmlocal_LlamaApi_predict(
     jfloat minP = env->GetFloatField(modelParameters, minPField);
     jint maxTokens = env->GetIntField(modelParameters, maxTokensField);
     jfloat repeatPenalty = env->GetFloatField(modelParameters, repeatPenaltyField);
+
+    // Extract system prompt and inject if messages are empty (fallback if restoreHistory wasn't called)
+    jstring systemPrompt_j = (jstring)env->GetObjectField(modelParameters, systemPromptField);
+    const char* sp_c = env->GetStringUTFChars(systemPrompt_j, nullptr);
+    std::string systemPromptStr(sp_c);
+    env->ReleaseStringUTFChars(systemPrompt_j, sp_c);
+    if (session->messages.empty() && !systemPromptStr.empty()) {
+        session->messages.push_back({strdup("system"), strdup(systemPromptStr.c_str())});
+    }
 
     // Update the session parameters
     session->sparams.temp = temperature;

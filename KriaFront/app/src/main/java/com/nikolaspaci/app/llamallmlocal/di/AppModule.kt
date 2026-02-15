@@ -6,9 +6,11 @@ import com.nikolaspaci.app.llamallmlocal.data.database.AppDatabase
 import com.nikolaspaci.app.llamallmlocal.data.database.ChatDao
 import com.nikolaspaci.app.llamallmlocal.data.database.ModelDao
 import com.nikolaspaci.app.llamallmlocal.data.database.ModelParameterDao
+import com.nikolaspaci.app.llamallmlocal.data.database.SystemPromptPresetDao
 import com.nikolaspaci.app.llamallmlocal.data.repository.ChatRepository
 import com.nikolaspaci.app.llamallmlocal.data.repository.ModelParameterRepository
 import com.nikolaspaci.app.llamallmlocal.data.repository.ModelRepository
+import com.nikolaspaci.app.llamallmlocal.data.repository.SystemPromptPresetRepository
 import com.nikolaspaci.app.llamallmlocal.engine.DefaultModelParameterProvider
 import com.nikolaspaci.app.llamallmlocal.engine.LlamaEngine
 import com.nikolaspaci.app.llamallmlocal.engine.ModelEngine
@@ -67,6 +69,17 @@ object AppModule {
     @Singleton
     fun provideModelRepository(dao: ModelDao): ModelRepository {
         return ModelRepository(dao)
+    }
+
+    @Provides
+    fun provideSystemPromptPresetDao(database: AppDatabase): SystemPromptPresetDao {
+        return database.systemPromptPresetDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideSystemPromptPresetRepository(dao: SystemPromptPresetDao): SystemPromptPresetRepository {
+        return SystemPromptPresetRepository(dao)
     }
 
     @Provides
