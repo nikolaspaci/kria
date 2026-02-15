@@ -27,7 +27,8 @@ android {
         externalNativeBuild {
             cmake {
                 arguments += listOf(
-                    "-DGGML_VULKAN=OFF"
+                    "-DGGML_VULKAN=OFF",
+                    "-DCMAKE_SHARED_LINKER_FLAGS=-Wl,-z,max-page-size=16384"
                 )
             }
         }

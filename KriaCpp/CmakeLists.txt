@@ -82,11 +82,12 @@ function(create_android_jni_library target_name arch_name march_flags)
     )
 
     target_link_libraries(${target_name} PRIVATE llama common)
+    target_link_options(${target_name} PRIVATE -Wl,-z,max-page-size=16384)
 
     if(VULKAN_LIB)
         target_link_libraries(${target_name} PRIVATE ${VULKAN_LIB})
     endif()
-endfunction() 
+endfunction()
 
 
 if(ANDROID)
@@ -110,6 +111,7 @@ if(ANDROID)
         target_include_directories(jniKriaCppWrapper PRIVATE ${PROJECT_SOURCE_DIR}/include ${JNI_INCLUDE_DIRS} ${PROJECT_SOURCE_DIR}/extern/llama.cpp/include ${PROJECT_SOURCE_DIR}/extern/llama.cpp/common)
         set_target_properties(jniKriaCppWrapper PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/libs/${ANDROID_ABI}")
         target_link_libraries(jniKriaCppWrapper PRIVATE llama common)
+        target_link_options(jniKriaCppWrapper PRIVATE -Wl,-z,max-page-size=16384)
     endif()
 else()
     # Non-Android build
