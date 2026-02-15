@@ -13,6 +13,7 @@ import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -129,20 +130,26 @@ fun AppNavigation(factory: ViewModelFactory) {
                 arguments = listOf(
                     navArgument("conversationId") { type = NavType.LongType }
                 )
-            ) {
+            ) { backStackEntry ->
                 val chatViewModel: ChatViewModel = hiltViewModel()
+                val savedStateHandle = backStackEntry.savedStateHandle
+                val selectedModelPath by savedStateHandle.getStateFlow<String?>("selected_model_path", null)
+                    .collectAsState()
+
+                LaunchedEffect(selectedModelPath) {
+                    selectedModelPath?.let { path ->
+                        chatViewModel.changeModel(path)
+                        savedStateHandle.remove<String>("selected_model_path")
+                    }
+                }
 
                 ChatScreen(
                     viewModel = chatViewModel,
-                    modelFileViewModel = modelFileViewModel,
                     onOpenDrawer = {
                         scope.launch { drawerState.open() }
                     },
                     onNavigateToSettings = { modelId ->
                         navController.navigate(Screen.Settings.createRoute(modelId))
-                    },
-                    onNavigateToHuggingFace = {
-                        navController.navigate(Screen.HuggingFace.route)
                     }
                 )
             }
@@ -166,6 +173,13 @@ fun AppNavigation(factory: ViewModelFactory) {
                 val modelId = backStackEntry.arguments?.getString("modelId") ?: ""
                 SettingsScreen(
                     modelId = modelId,
+                    modelFileViewModel = modelFileViewModel,
+                    onModelChanged = { newPath ->
+                        navController.previousBackStackEntry?.savedStateHandle?.set("selected_model_path", newPath)
+                    },
+                    onNavigateToHuggingFace = {
+                        navController.navigate(Screen.HuggingFace.route)
+                    },
                     onNavigateBack = { navController.popBackStack() }
                 )
             }

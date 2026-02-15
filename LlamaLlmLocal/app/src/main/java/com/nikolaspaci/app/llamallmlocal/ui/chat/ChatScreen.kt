@@ -1,14 +1,14 @@
 package com.nikolaspaci.app.llamallmlocal.ui.chat
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -17,22 +17,20 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.nikolaspaci.app.llamallmlocal.ui.common.AppTopAppBar
 import com.nikolaspaci.app.llamallmlocal.ui.common.MessageInput
-import com.nikolaspaci.app.llamallmlocal.ui.common.ModelSelector
 import com.nikolaspaci.app.llamallmlocal.viewmodel.ChatUiState
 import com.nikolaspaci.app.llamallmlocal.viewmodel.ChatViewModel
-import com.nikolaspaci.app.llamallmlocal.viewmodel.ModelFileViewModel
+import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(
     viewModel: ChatViewModel,
-    modelFileViewModel: ModelFileViewModel,
     onOpenDrawer: () -> Unit,
-    onNavigateToSettings: (String) -> Unit,
-    onNavigateToHuggingFace: () -> Unit = {}
+    onNavigateToSettings: (String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var selectedModelPath by remember { mutableStateOf("") }
@@ -73,17 +71,6 @@ fun ChatScreen(
         },
         bottomBar = {
             Column(modifier = Modifier.padding(8.dp)) {
-                ModelSelector(
-                    modelFileViewModel = modelFileViewModel,
-                    selectedModelPath = selectedModelPath,
-                    onModelSelected = {
-                        selectedModelPath = it
-                        viewModel.changeModel(it)
-                    },
-                    onDownloadFromHuggingFace = onNavigateToHuggingFace,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                Spacer(modifier = Modifier.height(8.dp))
                 MessageInput(
                     onSendMessage = { viewModel.sendMessage(it) },
                     isEnabled = isModelReady && !isGenerating
@@ -105,42 +92,45 @@ fun ChatScreen(
             }
 
             is ChatUiState.Ready -> {
-                MessageList(
-                    messages = state.messages,
-                    streamingState = null,
-                    lastMessageStats = null,
-                    onCancelGeneration = {},
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues)
-                )
+                Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+                    ModelNameHeader(currentModelName)
+                    MessageList(
+                        messages = state.messages,
+                        streamingState = null,
+                        lastMessageStats = null,
+                        onCancelGeneration = {},
+                        modifier = Modifier.fillMaxWidth().weight(1f)
+                    )
+                }
             }
 
             is ChatUiState.Generating -> {
-                MessageList(
-                    messages = state.messages,
-                    streamingState = StreamingState(
-                        currentText = state.currentResponse,
-                        tokensGenerated = state.tokensGenerated
-                    ),
-                    lastMessageStats = null,
-                    onCancelGeneration = { viewModel.cancelPrediction() },
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues)
-                )
+                Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+                    ModelNameHeader(currentModelName)
+                    MessageList(
+                        messages = state.messages,
+                        streamingState = StreamingState(
+                            currentText = state.currentResponse,
+                            tokensGenerated = state.tokensGenerated
+                        ),
+                        lastMessageStats = null,
+                        onCancelGeneration = { viewModel.cancelPrediction() },
+                        modifier = Modifier.fillMaxWidth().weight(1f)
+                    )
+                }
             }
 
             is ChatUiState.MessageComplete -> {
-                MessageList(
-                    messages = state.messages,
-                    streamingState = null,
-                    lastMessageStats = state.stats,
-                    onCancelGeneration = {},
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues)
-                )
+                Column(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+                    ModelNameHeader(currentModelName)
+                    MessageList(
+                        messages = state.messages,
+                        streamingState = null,
+                        lastMessageStats = state.stats,
+                        onCancelGeneration = {},
+                        modifier = Modifier.fillMaxWidth().weight(1f)
+                    )
+                }
             }
 
             is ChatUiState.Error -> {
@@ -151,5 +141,18 @@ fun ChatScreen(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun ModelNameHeader(modelName: String) {
+    if (modelName.isNotEmpty()) {
+        Text(
+            text = File(modelName).name,
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+            textAlign = TextAlign.Center
+        )
     }
 }

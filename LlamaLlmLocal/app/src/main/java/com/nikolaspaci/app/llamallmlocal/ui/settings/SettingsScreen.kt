@@ -14,8 +14,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.nikolaspaci.app.llamallmlocal.data.database.ModelParameter
+import com.nikolaspaci.app.llamallmlocal.ui.common.ModelSelector
 import com.nikolaspaci.app.llamallmlocal.util.HardwareCapabilities
 import com.nikolaspaci.app.llamallmlocal.util.OptimalConfigurationService
+import com.nikolaspaci.app.llamallmlocal.viewmodel.ModelFileViewModel
 import com.nikolaspaci.app.llamallmlocal.viewmodel.SettingsUiState
 import com.nikolaspaci.app.llamallmlocal.viewmodel.SettingsViewModel
 
@@ -23,10 +25,14 @@ import com.nikolaspaci.app.llamallmlocal.viewmodel.SettingsViewModel
 @Composable
 fun SettingsScreen(
     modelId: String,
+    modelFileViewModel: ModelFileViewModel,
+    onModelChanged: (String) -> Unit,
+    onNavigateToHuggingFace: () -> Unit,
     onNavigateBack: () -> Unit,
     viewModel: SettingsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var currentModelId by remember { mutableStateOf(modelId) }
 
     LaunchedEffect(modelId) {
         viewModel.loadParameters(modelId)
@@ -49,41 +55,62 @@ fun SettingsScreen(
             )
         }
     ) { padding ->
-        when (val state = uiState) {
-            is SettingsUiState.Loading -> {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
-                }
-            }
-
-            is SettingsUiState.Ready -> {
-                SettingsContent(
-                    parameters = state.parameters,
-                    errors = state.validationErrors,
-                    onParameterChange = { viewModel.updateParameter(it) },
-                    onSave = { viewModel.saveParameters() },
-                    modifier = Modifier.padding(padding)
+        Column(modifier = Modifier.padding(padding)) {
+            // Model Selection section
+            Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+            SettingsSection(title = "Model") {
+                ModelSelector(
+                    modelFileViewModel = modelFileViewModel,
+                    selectedModelPath = currentModelId,
+                    onModelSelected = { newPath ->
+                        currentModelId = newPath
+                        onModelChanged(newPath)
+                        viewModel.loadParameters(newPath)
+                    },
+                    onDownloadFromHuggingFace = onNavigateToHuggingFace,
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
-
-            is SettingsUiState.Saved -> {
-                LaunchedEffect(Unit) {
-                    onNavigateBack()
-                }
             }
 
-            is SettingsUiState.Error -> {
-                Box(
-                    modifier = Modifier.fillMaxSize().padding(padding),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = state.message,
-                        color = MaterialTheme.colorScheme.error
+            Spacer(modifier = Modifier.height(16.dp))
+
+            when (val state = uiState) {
+                is SettingsUiState.Loading -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
+                }
+
+                is SettingsUiState.Ready -> {
+                    SettingsContent(
+                        parameters = state.parameters,
+                        errors = state.validationErrors,
+                        onParameterChange = { viewModel.updateParameter(it) },
+                        onSave = { viewModel.saveParameters() },
+                        modifier = Modifier
                     )
+                }
+
+                is SettingsUiState.Saved -> {
+                    LaunchedEffect(Unit) {
+                        onNavigateBack()
+                    }
+                }
+
+                is SettingsUiState.Error -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = state.message,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
                 }
             }
         }
