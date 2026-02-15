@@ -47,7 +47,7 @@ fun OptimizationSuggestions(
                     tint = MaterialTheme.colorScheme.onTertiaryContainer
                 )
                 Text(
-                    text = "Suggestions d'optimisation",
+                    text = "Optimization Suggestions",
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.onTertiaryContainer
                 )
@@ -86,7 +86,7 @@ private fun SuggestionItem(
             )
         }
         TextButton(onClick = onApply) {
-            Text("Appliquer")
+            Text("Apply")
         }
     }
 }

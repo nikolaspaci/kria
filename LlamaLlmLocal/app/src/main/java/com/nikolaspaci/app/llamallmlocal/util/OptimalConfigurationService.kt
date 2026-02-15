@@ -59,9 +59,9 @@ class OptimalConfigurationService @Inject constructor(
         // Suggestion GPU
         if (caps.hasVulkan && !currentConfig.useGpu) {
             suggestions.add(OptimizationSuggestion(
-                title = "Activer l'acceleration GPU",
-                description = "Votre appareil supporte Vulkan (${caps.gpuName}). " +
-                             "L'acceleration GPU peut ameliorer les performances de 2-3x.",
+                title = "Enable GPU acceleration",
+                description = "Your device supports Vulkan (${caps.gpuName}). " +
+                             "GPU acceleration can improve performance by 2-3x.",
                 parameterChange = { it.copy(useGpu = true) },
                 priority = 10
             ))
@@ -71,9 +71,9 @@ class OptimalConfigurationService @Inject constructor(
         val optimalThreads = (caps.cpuCores * 0.7).toInt()
         if (currentConfig.threadCount < optimalThreads - 1) {
             suggestions.add(OptimizationSuggestion(
-                title = "Augmenter les threads",
-                description = "Votre appareil a ${caps.cpuCores} cores. " +
-                             "Passer de ${currentConfig.threadCount} a $optimalThreads threads.",
+                title = "Increase threads",
+                description = "Your device has ${caps.cpuCores} cores. " +
+                             "Increase from ${currentConfig.threadCount} to $optimalThreads threads.",
                 parameterChange = { it.copy(threadCount = optimalThreads) },
                 priority = 5
             ))
@@ -88,9 +88,9 @@ class OptimalConfigurationService @Inject constructor(
         if (currentConfig.contextSize < recommendedContext &&
             caps.availableRamBytes > 4L * 1024 * 1024 * 1024) {
             suggestions.add(OptimizationSuggestion(
-                title = "Augmenter le contexte",
-                description = "Avec ${formatBytes(caps.availableRamBytes)} de RAM disponible, " +
-                             "vous pouvez utiliser un contexte de $recommendedContext tokens.",
+                title = "Increase context",
+                description = "With ${formatBytes(caps.availableRamBytes)} of available RAM, " +
+                             "you can use a context of $recommendedContext tokens.",
                 parameterChange = { it.copy(contextSize = recommendedContext) },
                 priority = 3
             ))
@@ -100,9 +100,9 @@ class OptimalConfigurationService @Inject constructor(
         if (caps.availableRamBytes < 2L * 1024 * 1024 * 1024 &&
             currentConfig.contextSize > 1024) {
             suggestions.add(OptimizationSuggestion(
-                title = "Reduire le contexte",
-                description = "RAM disponible faible (${formatBytes(caps.availableRamBytes)}). " +
-                             "Reduire le contexte a 1024 pour eviter les crashs.",
+                title = "Reduce context",
+                description = "Low available RAM (${formatBytes(caps.availableRamBytes)}). " +
+                             "Reduce context to 1024 to avoid crashes.",
                 parameterChange = { it.copy(contextSize = 1024) },
                 priority = 15
             ))

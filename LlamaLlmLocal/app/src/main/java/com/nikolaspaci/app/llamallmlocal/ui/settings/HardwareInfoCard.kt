@@ -46,7 +46,7 @@ fun HardwareInfoCard(
                     tint = MaterialTheme.colorScheme.primary
                 )
                 Text(
-                    text = "Configuration Materielle",
+                    text = "Hardware Configuration",
                     style = MaterialTheme.typography.titleMedium
                 )
             }
@@ -63,7 +63,7 @@ fun HardwareInfoCard(
             HardwareInfoRow(
                 label = "RAM",
                 value = "${formatBytesDisplay(capabilities.totalRamBytes)} total, " +
-                       "${formatBytesDisplay(capabilities.availableRamBytes)} disponible"
+                       "${formatBytesDisplay(capabilities.availableRamBytes)} available"
             )
 
             // GPU / Vulkan
@@ -102,7 +102,7 @@ fun HardwareInfoCard(
                             modifier = Modifier.size(16.dp)
                         )
                         Text(
-                            text = "GPU disponible",
+                            text = "GPU available",
                             style = MaterialTheme.typography.labelSmall,
                             color = Color(0xFF4CAF50)
                         )
@@ -111,7 +111,7 @@ fun HardwareInfoCard(
 
                 if (capabilities.recommendedGpuLayers > 0) {
                     Text(
-                        text = "Couches GPU recommandees: ${capabilities.recommendedGpuLayers}",
+                        text = "Recommended GPU layers: ${capabilities.recommendedGpuLayers}",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -128,7 +128,7 @@ fun HardwareInfoCard(
                         modifier = Modifier.size(16.dp)
                     )
                     Text(
-                        text = "Acceleration GPU non disponible",
+                        text = "GPU acceleration not available",
                         style = MaterialTheme.typography.bodySmall,
                         color = Color(0xFFFF9800)
                     )
@@ -139,7 +139,7 @@ fun HardwareInfoCard(
             if (capabilities.hasNpu) {
                 HardwareInfoRow(
                     label = "NPU",
-                    value = capabilities.npuType ?: "Disponible"
+                    value = capabilities.npuType ?: "Available"
                 )
             }
         }

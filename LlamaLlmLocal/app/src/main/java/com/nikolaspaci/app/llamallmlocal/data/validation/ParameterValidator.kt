@@ -13,36 +13,36 @@ object ParameterValidator {
         val errors = mutableMapOf<String, String>()
 
         if (params.temperature !in ModelParameter.TEMPERATURE_RANGE) {
-            errors["temperature"] = "Doit être entre ${ModelParameter.TEMPERATURE_RANGE.start} et ${ModelParameter.TEMPERATURE_RANGE.endInclusive}"
+            errors["temperature"] = "Must be between ${ModelParameter.TEMPERATURE_RANGE.start} and ${ModelParameter.TEMPERATURE_RANGE.endInclusive}"
         }
 
         if (params.topK !in ModelParameter.TOP_K_RANGE) {
-            errors["topK"] = "Doit être entre ${ModelParameter.TOP_K_RANGE.first} et ${ModelParameter.TOP_K_RANGE.last}"
+            errors["topK"] = "Must be between ${ModelParameter.TOP_K_RANGE.first} and ${ModelParameter.TOP_K_RANGE.last}"
         }
 
         if (params.topP !in ModelParameter.TOP_P_RANGE) {
-            errors["topP"] = "Doit être entre ${ModelParameter.TOP_P_RANGE.start} et ${ModelParameter.TOP_P_RANGE.endInclusive}"
+            errors["topP"] = "Must be between ${ModelParameter.TOP_P_RANGE.start} and ${ModelParameter.TOP_P_RANGE.endInclusive}"
         }
 
         if (params.minP !in ModelParameter.MIN_P_RANGE) {
-            errors["minP"] = "Doit être entre ${ModelParameter.MIN_P_RANGE.start} et ${ModelParameter.MIN_P_RANGE.endInclusive}"
+            errors["minP"] = "Must be between ${ModelParameter.MIN_P_RANGE.start} and ${ModelParameter.MIN_P_RANGE.endInclusive}"
         }
 
         if (params.contextSize !in ModelParameter.CONTEXT_SIZE_VALUES) {
-            errors["contextSize"] = "Valeurs autorisées: ${ModelParameter.CONTEXT_SIZE_VALUES.joinToString()}"
+            errors["contextSize"] = "Allowed values: ${ModelParameter.CONTEXT_SIZE_VALUES.joinToString()}"
         }
 
         if (params.maxTokens !in ModelParameter.MAX_TOKENS_RANGE) {
-            errors["maxTokens"] = "Doit être entre ${ModelParameter.MAX_TOKENS_RANGE.first} et ${ModelParameter.MAX_TOKENS_RANGE.last}"
+            errors["maxTokens"] = "Must be between ${ModelParameter.MAX_TOKENS_RANGE.first} and ${ModelParameter.MAX_TOKENS_RANGE.last}"
         }
 
         val maxThreads = ModelParameter.getMaxThreads()
         if (params.threadCount !in 1..maxThreads) {
-            errors["threadCount"] = "Doit être entre 1 et $maxThreads"
+            errors["threadCount"] = "Must be between 1 and $maxThreads"
         }
 
         if (params.repeatPenalty !in ModelParameter.REPEAT_PENALTY_RANGE) {
-            errors["repeatPenalty"] = "Doit être entre ${ModelParameter.REPEAT_PENALTY_RANGE.start} et ${ModelParameter.REPEAT_PENALTY_RANGE.endInclusive}"
+            errors["repeatPenalty"] = "Must be between ${ModelParameter.REPEAT_PENALTY_RANGE.start} and ${ModelParameter.REPEAT_PENALTY_RANGE.endInclusive}"
         }
 
         return ValidationResult(errors.isEmpty(), errors)

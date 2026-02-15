@@ -35,15 +35,15 @@ fun SettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Paramètres du modèle") },
+                title = { Text("Model Settings") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Retour")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
                     }
                 },
                 actions = {
                     IconButton(onClick = { viewModel.resetToDefaults() }) {
-                        Icon(Icons.Default.Refresh, "Réinitialiser")
+                        Icon(Icons.Default.Refresh, "Reset")
                     }
                 }
             )
@@ -123,13 +123,13 @@ private fun SettingsContent(
         )
 
         // Section Sampling
-        SettingsSection(title = "Paramètres de Sampling") {
+        SettingsSection(title = "Sampling Parameters") {
             ParameterSlider(
                 label = "Temperature",
                 value = parameters.temperature,
                 onValueChange = { onParameterChange(parameters.copy(temperature = it)) },
                 valueRange = ModelParameter.TEMPERATURE_RANGE,
-                description = "Contrôle la créativité (0 = déterministe, 2 = très créatif)",
+                description = "Controls creativity (0 = deterministic, 2 = very creative)",
                 error = errors["temperature"]
             )
 
@@ -138,7 +138,7 @@ private fun SettingsContent(
                 value = parameters.topK,
                 onValueChange = { onParameterChange(parameters.copy(topK = it)) },
                 valueRange = ModelParameter.TOP_K_RANGE,
-                description = "Nombre de tokens candidats à considérer",
+                description = "Number of candidate tokens to consider",
                 error = errors["topK"]
             )
 
@@ -147,7 +147,7 @@ private fun SettingsContent(
                 value = parameters.topP,
                 onValueChange = { onParameterChange(parameters.copy(topP = it)) },
                 valueRange = ModelParameter.TOP_P_RANGE,
-                description = "Probabilité cumulative des tokens à considérer",
+                description = "Cumulative probability of tokens to consider",
                 error = errors["topP"]
             )
 
@@ -156,7 +156,7 @@ private fun SettingsContent(
                 value = parameters.minP,
                 onValueChange = { onParameterChange(parameters.copy(minP = it)) },
                 valueRange = ModelParameter.MIN_P_RANGE,
-                description = "Seuil minimum de probabilité",
+                description = "Minimum probability threshold",
                 error = errors["minP"]
             )
 
@@ -165,28 +165,28 @@ private fun SettingsContent(
                 value = parameters.repeatPenalty,
                 onValueChange = { onParameterChange(parameters.copy(repeatPenalty = it)) },
                 valueRange = ModelParameter.REPEAT_PENALTY_RANGE,
-                description = "Pénalité pour éviter les répétitions",
+                description = "Penalty to avoid repetitions",
                 error = errors["repeatPenalty"]
             )
         }
 
-        // Section Génération
-        SettingsSection(title = "Paramètres de Génération") {
+        // Generation section
+        SettingsSection(title = "Generation Parameters") {
             ParameterDropdown(
-                label = "Taille du Contexte",
+                label = "Context Size",
                 value = parameters.contextSize,
                 options = ModelParameter.CONTEXT_SIZE_VALUES,
                 onValueChange = { onParameterChange(parameters.copy(contextSize = it)) },
                 formatOption = { "$it tokens" },
-                description = "Mémoire de contexte du modèle"
+                description = "Model context memory"
             )
 
             ParameterIntSlider(
-                label = "Tokens Maximum",
+                label = "Max Tokens",
                 value = parameters.maxTokens,
                 onValueChange = { onParameterChange(parameters.copy(maxTokens = it)) },
                 valueRange = ModelParameter.MAX_TOKENS_RANGE,
-                description = "Longueur maximale de la réponse",
+                description = "Maximum response length",
                 error = errors["maxTokens"]
             )
         }
@@ -198,7 +198,7 @@ private fun SettingsContent(
                 value = parameters.threadCount,
                 onValueChange = { onParameterChange(parameters.copy(threadCount = it)) },
                 valueRange = 1..ModelParameter.getMaxThreads(),
-                description = "Nombre de threads pour l'inférence (max: ${ModelParameter.getMaxThreads()})",
+                description = "Number of threads for inference (max: ${ModelParameter.getMaxThreads()})",
                 error = errors["threadCount"]
             )
 
@@ -208,9 +208,9 @@ private fun SettingsContent(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column {
-                    Text("Accélération GPU", style = MaterialTheme.typography.bodyMedium)
+                    Text("GPU Acceleration", style = MaterialTheme.typography.bodyMedium)
                     Text(
-                        "Utiliser Vulkan si disponible",
+                        "Use Vulkan if available",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -222,13 +222,13 @@ private fun SettingsContent(
             }
         }
 
-        // Bouton Sauvegarder
+        // Save button
         Button(
             onClick = onSave,
             enabled = errors.isEmpty(),
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Sauvegarder")
+            Text("Save")
         }
     }
 }
