@@ -23,7 +23,7 @@ class ModelLoadGuard @Inject constructor(
 ) {
 
     companion object {
-        private const val RAM_MARGIN_BYTES = 500L * 1024 * 1024 // 500 MB
+        private const val TOTAL_RAM_USABLE_RATIO = 0.7 // 70% of total RAM (OS + other apps use ~30%)
         private const val MIN_VRAM_BYTES = 256L * 1024 * 1024 // 256 MB
         private const val CPU_USAGE_RATIO = 0.8
         private val CONTEXT_SIZES_DESCENDING = listOf(4096, 2048, 1024, 512)
@@ -45,21 +45,21 @@ class ModelLoadGuard @Inject constructor(
         val modelSizeBytes = modelFile.length()
         var adjustedParams = parameters
 
-        // 2. Check available RAM
+        // 2. Check available RAM — use totalMem because Android reclaims caches on demand
         val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
         val memInfo = ActivityManager.MemoryInfo()
         activityManager.getMemoryInfo(memInfo)
-        val availableRam = memInfo.availMem
+        val usableRam = (memInfo.totalMem * TOTAL_RAM_USABLE_RATIO).toLong()
 
-        val estimatedRamNeeded = modelSizeBytes + estimateContextRam(parameters.contextSize) + RAM_MARGIN_BYTES
+        val estimatedRamNeeded = modelSizeBytes + estimateContextRam(parameters.contextSize)
 
-        if (availableRam < estimatedRamNeeded) {
+        if (usableRam < estimatedRamNeeded) {
             // Try to reduce contextSize progressively
             var found = false
             for (ctxSize in CONTEXT_SIZES_DESCENDING) {
                 if (ctxSize >= parameters.contextSize) continue
-                val reducedEstimate = modelSizeBytes + estimateContextRam(ctxSize) + RAM_MARGIN_BYTES
-                if (availableRam >= reducedEstimate) {
+                val reducedEstimate = modelSizeBytes + estimateContextRam(ctxSize)
+                if (usableRam >= reducedEstimate) {
                     warnings.add("RAM insuffisante pour contextSize=${parameters.contextSize}, réduit à $ctxSize")
                     adjustedParams = adjustedParams.copy(contextSize = ctxSize)
                     found = true
@@ -69,7 +69,7 @@ class ModelLoadGuard @Inject constructor(
             if (!found) {
                 return PreflightResult(
                     canLoad = false,
-                    error = "RAM insuffisante (${formatMB(availableRam)} disponible, ~${formatMB(estimatedRamNeeded)} requis)"
+                    error = "RAM insuffisante (${formatMB(usableRam)} utilisable, ~${formatMB(estimatedRamNeeded)} requis)"
                 )
             }
         }
