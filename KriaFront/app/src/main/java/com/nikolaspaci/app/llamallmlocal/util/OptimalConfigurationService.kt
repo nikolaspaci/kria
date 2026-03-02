@@ -37,6 +37,7 @@ class OptimalConfigurationService @Inject constructor(
         }
 
         val useGpu = caps.hasVulkan && caps.gpuVramBytes > 512 * 1024 * 1024
+        val gpuLayers = if (useGpu) caps.recommendedGpuLayers else 0
 
         return ModelParameter(
             temperature = 0.7f,
@@ -47,7 +48,8 @@ class OptimalConfigurationService @Inject constructor(
             maxTokens = optimalMaxTokens,
             threadCount = optimalThreads,
             repeatPenalty = 1.1f,
-            useGpu = useGpu
+            useGpu = useGpu,
+            gpuLayers = gpuLayers
         )
     }
 

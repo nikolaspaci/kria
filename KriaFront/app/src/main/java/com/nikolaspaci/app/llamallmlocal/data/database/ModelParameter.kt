@@ -17,6 +17,7 @@ data class ModelParameter(
     val threadCount: Int = 4,
     val repeatPenalty: Float = 1.1f,
     val useGpu: Boolean = false,
+    val gpuLayers: Int = 99,
     val systemPrompt: String = ""
 ) {
     companion object {

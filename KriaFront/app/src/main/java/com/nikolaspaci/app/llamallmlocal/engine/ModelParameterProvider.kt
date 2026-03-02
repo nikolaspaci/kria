@@ -5,7 +5,7 @@ import com.nikolaspaci.app.llamallmlocal.data.database.ModelParameter
 import com.nikolaspaci.app.llamallmlocal.data.repository.ChatRepository
 import com.nikolaspaci.app.llamallmlocal.data.repository.ModelParameterRepository
 import com.nikolaspaci.app.llamallmlocal.data.repository.ModelRepository
-import com.nikolaspaci.app.llamallmlocal.data.validation.ParameterValidator
+import com.nikolaspaci.app.llamallmlocal.util.OptimalConfigurationService
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -23,14 +23,15 @@ interface ModelParameterProvider {
 class DefaultModelParameterProvider @Inject constructor(
     private val modelRepository: ModelRepository,
     private val modelParameterRepository: ModelParameterRepository,
-    private val chatRepository: ChatRepository
+    private val chatRepository: ChatRepository,
+    private val optimalConfigurationService: OptimalConfigurationService
 ) : ModelParameterProvider {
 
     override suspend fun ensureModelExists(filePath: String): Model {
         val existing = modelRepository.getByFilePath(filePath)
         if (existing != null) return existing
 
-        val defaultParams = ParameterValidator.getDefaultParameters()
+        val defaultParams = optimalConfigurationService.getOptimalConfiguration()
         val paramId = modelParameterRepository.insert(defaultParams)
 
         val model = Model(filePath = filePath, defaultParameterId = paramId)
