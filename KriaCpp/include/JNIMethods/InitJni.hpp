@@ -2,6 +2,9 @@
 #define INIT_JNI_HPP
 #include <jni.h>
 
+extern "C" JNIEXPORT void JNICALL
+Java_com_nikolaspaci_app_llamallmlocal_LlamaApi_loadBackends(JNIEnv *env, jobject /* this */, jstring nativeLibDir);
+
 extern "C" JNIEXPORT jlong JNICALL
-Java_com_nikolaspaci_app_llamallmlocal_LlamaApi_init(JNIEnv *env, jobject /* this */, jstring modelPath,jobject modelParameters);
+Java_com_nikolaspaci_app_llamallmlocal_LlamaApi_init(JNIEnv *env, jobject /* this */, jstring modelPath, jobject modelParameters);
 #endif // INIT_JNI_HPP

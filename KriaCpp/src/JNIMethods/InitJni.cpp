@@ -1,11 +1,18 @@
 #include "JNIMethods/InitJni.hpp"
 #include "session/LlamaSession.hpp"
 #include "llama-cpp.h"
+#include "ggml-backend.h"
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_nikolaspaci_app_llamallmlocal_LlamaApi_loadBackends(JNIEnv *env, jobject /* this */, jstring nativeLibDir) {
+    const char *path = env->GetStringUTFChars(nativeLibDir, 0);
+    ggml_backend_load_all_from_path(path);
+    env->ReleaseStringUTFChars(nativeLibDir, path);
+    llama_backend_init();
+}
 
 extern "C" JNIEXPORT jlong JNICALL
 Java_com_nikolaspaci_app_llamallmlocal_LlamaApi_init(JNIEnv *env, jobject /* this */, jstring modelPath, jobject modelParameters) {
-    // Initialise the llama backend.
-    llama_backend_init();
 
     // Find the ModelParameter class and its fields
     jclass modelParamsClass = env->FindClass("com/nikolaspaci/app/llamallmlocal/data/database/ModelParameter");
@@ -16,6 +23,7 @@ Java_com_nikolaspaci_app_llamallmlocal_LlamaApi_init(JNIEnv *env, jobject /* thi
     jfieldID contextSizeField = env->GetFieldID(modelParamsClass, "contextSize", "I");
     jfieldID threadCountField = env->GetFieldID(modelParamsClass, "threadCount", "I");
     jfieldID useGpuField = env->GetFieldID(modelParamsClass, "useGpu", "Z");
+    jfieldID gpuLayersField = env->GetFieldID(modelParamsClass, "gpuLayers", "I");
 
     // Get the values from the modelParameters object
     jfloat temperature = env->GetFloatField(modelParameters, temperatureField);
@@ -25,6 +33,7 @@ Java_com_nikolaspaci_app_llamallmlocal_LlamaApi_init(JNIEnv *env, jobject /* thi
     jint contextSize = env->GetIntField(modelParameters, contextSizeField);
     jint threadCount = env->GetIntField(modelParameters, threadCountField);
     jboolean useGpu = env->GetBooleanField(modelParameters, useGpuField);
+    jint gpuLayers = env->GetIntField(modelParameters, gpuLayersField);
 
 
     // Prepare the parameters for the model and context.
@@ -32,7 +41,7 @@ Java_com_nikolaspaci_app_llamallmlocal_LlamaApi_init(JNIEnv *env, jobject /* thi
     model_params.use_mmap = true; // Use memory-mapped files for model loading.
     model_params.use_mlock = false;
     if (useGpu) {
-        model_params.n_gpu_layers = 99;  // Toutes les couches sur GPU
+        model_params.n_gpu_layers = gpuLayers;
     }
     llama_context_params ctx_params = llama_context_default_params();
 
@@ -56,7 +65,6 @@ Java_com_nikolaspaci_app_llamallmlocal_LlamaApi_init(JNIEnv *env, jobject /* thi
 
     if (!session->model) {
         delete session; // Cleanup the session if the model failed to load
-        llama_backend_free();
         return 0;
     }
 
@@ -64,7 +72,6 @@ Java_com_nikolaspaci_app_llamallmlocal_LlamaApi_init(JNIEnv *env, jobject /* thi
     session->context.reset(llama_init_from_model(session->model.get(), ctx_params));
     if (!session->context) {
         delete session; // The model's unique_ptr will be automatically released here
-        llama_backend_free();
         return 0;
     }
 

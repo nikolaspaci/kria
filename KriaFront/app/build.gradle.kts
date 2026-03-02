@@ -6,6 +6,8 @@ plugins {
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
+    alias(libs.plugins.google.services)
+    alias(libs.plugins.firebase.crashlytics)
 }
 
 val keystoreProperties = Properties().apply {
@@ -21,8 +23,8 @@ android {
         applicationId = "com.nikolaspaci.app.llamallmlocal"
         minSdk = 34
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -35,6 +37,10 @@ android {
             cmake {
                 arguments += listOf(
                     "-DGGML_VULKAN=OFF",
+                    "-DGGML_BACKEND_DL=ON",
+                    "-DGGML_CPU_ALL_VARIANTS=ON",
+                    "-DGGML_LLAMAFILE=OFF",
+                    "-DGGML_NATIVE=OFF",
                     "-DCMAKE_SHARED_LINKER_FLAGS=-Wl,-z,max-page-size=16384"
                 )
             }
@@ -133,4 +139,9 @@ dependencies {
     // OkHttp + Gson
     implementation(libs.okhttp)
     implementation(libs.gson)
+
+    // Firebase
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.crashlytics.ktx)
+    implementation(libs.firebase.analytics.ktx)
 }

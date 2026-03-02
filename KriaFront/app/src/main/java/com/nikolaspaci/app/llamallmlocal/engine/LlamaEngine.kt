@@ -1,10 +1,15 @@
 package com.nikolaspaci.app.llamallmlocal.engine
 
+import android.content.Context
+import android.util.Log
+import com.google.firebase.crashlytics.ktx.crashlytics
+import com.google.firebase.ktx.Firebase
 import com.nikolaspaci.app.llamallmlocal.LlamaApi
 import com.nikolaspaci.app.llamallmlocal.PredictCallback
 import com.nikolaspaci.app.llamallmlocal.data.database.ChatMessage
 import com.nikolaspaci.app.llamallmlocal.data.database.ModelParameter
 import com.nikolaspaci.app.llamallmlocal.jni.PredictionEvent
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -21,12 +26,25 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
-class LlamaEngine @Inject constructor() : ModelEngine {
+class LlamaEngine @Inject constructor(
+    @ApplicationContext private val context: Context,
+    private val modelLoadGuard: ModelLoadGuard
+) : ModelEngine {
 
     private var sessionPtr: Long = 0
     private var currentModelPath: String? = null
     private var currentSystemPrompt: String = ""
     private val mutex = Mutex()
+    private var backendsLoaded = false
+
+    private fun ensureBackendsLoaded() {
+        if (!backendsLoaded) {
+            val nativeLibDir = context.applicationInfo.nativeLibraryDir
+            Log.i(TAG, "Loading GGML backends from: $nativeLibDir")
+            LlamaApi.loadBackends(nativeLibDir)
+            backendsLoaded = true
+        }
+    }
 
     private val _loadState = MutableStateFlow<ModelEngine.LoadState>(ModelEngine.LoadState.Idle)
     override val loadState: StateFlow<ModelEngine.LoadState> = _loadState.asStateFlow()
@@ -37,6 +55,18 @@ class LlamaEngine @Inject constructor() : ModelEngine {
                 val modelName = File(modelPath).nameWithoutExtension
                 _loadState.value = ModelEngine.LoadState.Loading(0f, modelName)
 
+                // Pre-flight check
+                val preflight = modelLoadGuard.check(modelPath, parameters)
+                if (!preflight.canLoad) {
+                    val error = preflight.error ?: "Pre-flight check failed"
+                    _loadState.value = ModelEngine.LoadState.Error(error)
+                    return@withLock Result.failure(IllegalStateException(error))
+                }
+                for (warning in preflight.warnings) {
+                    Log.w(TAG, "ModelLoadGuard: $warning")
+                }
+                val effectiveParams = preflight.adjustedParameters ?: parameters
+
                 if (sessionPtr != 0L) {
                     withContext(Dispatchers.IO) {
                         LlamaApi.free(sessionPtr)
@@ -46,7 +76,8 @@ class LlamaEngine @Inject constructor() : ModelEngine {
                 }
 
                 withContext(Dispatchers.IO) {
-                    sessionPtr = LlamaApi.init(modelPath, parameters)
+                    ensureBackendsLoaded()
+                    sessionPtr = LlamaApi.init(modelPath, effectiveParams)
                 }
 
                 if (sessionPtr == 0L) {
@@ -54,15 +85,34 @@ class LlamaEngine @Inject constructor() : ModelEngine {
                     Result.failure(IllegalStateException("Model loading failed"))
                 } else {
                     currentModelPath = modelPath
-                    currentSystemPrompt = parameters.systemPrompt
+                    currentSystemPrompt = effectiveParams.systemPrompt
                     _loadState.value = ModelEngine.LoadState.Loaded(modelName)
+                    setCrashlyticsModelKeys(modelName, effectiveParams)
                     Result.success(Unit)
                 }
             } catch (e: Exception) {
                 _loadState.value = ModelEngine.LoadState.Error(e.message ?: "Erreur inconnue")
+                Firebase.crashlytics.recordException(e)
                 Result.failure(e)
             }
         }
+    }
+
+    private fun setCrashlyticsModelKeys(modelName: String, params: ModelParameter) {
+        try {
+            val crashlytics = Firebase.crashlytics
+            crashlytics.setCustomKey("model_name", modelName)
+            crashlytics.setCustomKey("context_size", params.contextSize)
+            crashlytics.setCustomKey("thread_count", params.threadCount)
+            crashlytics.setCustomKey("use_gpu", params.useGpu)
+            crashlytics.setCustomKey("gpu_layers", params.gpuLayers)
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to set Crashlytics model keys", e)
+        }
+    }
+
+    companion object {
+        private const val TAG = "LlamaEngine"
     }
 
     override suspend fun unloadModel(): Result<Unit> {
@@ -101,6 +151,7 @@ class LlamaEngine @Inject constructor() : ModelEngine {
             }
 
             override fun onError(error: String) {
+                Firebase.crashlytics.recordException(RuntimeException("Prediction error: $error"))
                 trySend(PredictionEvent.Error(error, isRecoverable = true))
                 close()
             }
