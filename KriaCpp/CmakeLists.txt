@@ -18,6 +18,9 @@ set(SOURCE_FILES_LIST
 )
 
 if(ANDROID)
+    # 16KB page size support (required by Google Play for Android 15+)
+    add_link_options(-Wl,-z,max-page-size=16384)
+
     set(LLAMA_CURL OFF CACHE BOOL "Disable CURL for Android" FORCE)
     set(LLAMA_INSTALL_LLDB_FORMATTERS OFF CACHE BOOL "Disable lldb formatters for Android" FORCE)
     set(ANDROID_ARM_NEON ON CACHE BOOL "Enable NEON" FORCE)
@@ -75,7 +78,6 @@ if(ANDROID)
     )
 
     target_link_libraries(jniKriaCppWrapper PRIVATE llama common)
-    target_link_options(jniKriaCppWrapper PRIVATE -Wl,-z,max-page-size=16384)
 
     if(VULKAN_LIB)
         target_link_libraries(jniKriaCppWrapper PRIVATE ${VULKAN_LIB})
