@@ -24,7 +24,8 @@ import java.io.File
 fun HistoryMenuItems(
     viewModel: HistoryViewModel,
     onConversationClick: (Long) -> Unit,
-    onCloseMenu: () -> Unit
+    onCloseMenu: () -> Unit,
+    onConversationDeleted: (Long) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var conversationToDelete by remember { mutableStateOf<ConversationWithMessages?>(null) }
@@ -36,7 +37,11 @@ fun HistoryMenuItems(
             text = { Text("Are you sure you want to permanently delete this conversation?") },
             confirmButton = {
                 Button(onClick = {
-                    conversationToDelete?.let { viewModel.deleteConversation(it) }
+                    conversationToDelete?.let {
+                        val deletedId = it.conversation.id
+                        viewModel.deleteConversation(it)
+                        onConversationDeleted(deletedId)
+                    }
                     conversationToDelete = null // Dismiss dialog
                 }) { Text("Delete") }
             },

@@ -119,6 +119,18 @@ fun AppNavigation(factory: ViewModelFactory) {
                         },
                         onCloseMenu = {
                             scope.launch { drawerState.close() }
+                        },
+                        onConversationDeleted = { deletedId ->
+                            val currentRoute = navController.currentDestination?.route
+                            val currentArgs = navController.currentBackStackEntry?.arguments
+                            if (currentRoute == Screen.Chat.route &&
+                                currentArgs?.getLong("conversationId") == deletedId
+                            ) {
+                                navController.navigate(Screen.Home.route) {
+                                    popUpTo(Screen.Home.route) { inclusive = true }
+                                }
+                                scope.launch { drawerState.close() }
+                            }
                         }
                     )
                 }
