@@ -4,6 +4,8 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <atomic>
+#include <mutex>
 #include "llama-cpp.h"
 #include "llama.h"
 #include "common.h"
@@ -17,6 +19,8 @@ struct LlamaSession {
     std::vector<char> formattedMessages;
     int n_past = 0;  // Pour tracker la position dans le contexte
     common_params_sampling sparams;
+    std::atomic<bool> cancelRequested{false};
+    std::mutex predictMutex;
 
     //need to delete llama_chat_message content
     ~LlamaSession() {

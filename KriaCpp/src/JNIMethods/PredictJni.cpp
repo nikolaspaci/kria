@@ -3,6 +3,7 @@
 #include "common.h"
 #include "sampling.h"
 #include "llama-cpp.h"
+#include "llama.h"
 #include "session/LlamaSession.hpp"
 #include <iostream>
 #include <string>
@@ -39,6 +40,11 @@ Java_com_nikolaspaci_app_llamallmlocal_LlamaApi_predict(
         env->CallVoidMethod(callback_obj, on_error_method, error_msg);
         return;
     }
+
+    // Prevent concurrent predict() calls on the same session
+    std::lock_guard<std::mutex> lock(session->predictMutex);
+    session->cancelRequested.store(false);
+    const int saved_n_past = session->n_past;
 
     // Find the ModelParameter class and its fields
     jclass modelParamsClass = env->FindClass("com/nikolaspaci/app/llamallmlocal/data/database/ModelParameter");
@@ -122,6 +128,13 @@ Java_com_nikolaspaci_app_llamallmlocal_LlamaApi_predict(
             const bool need_logits = (token_idx == n_tokens - 1);
             common_batch_add(batch, tokens[token_idx], token_idx, {0}, need_logits);
         }
+        if (session->cancelRequested.load()) {
+            llama_batch_free(batch);
+            // Clear KV cache entries written during this cancelled prediction
+            llama_memory_seq_rm(llama_get_memory(context), 0, saved_n_past, -1);
+            session->n_past = saved_n_past;
+            return;
+        }
         const int decodeId=llama_decode(context, batch);
         if (decodeId!= 0) {
             llama_batch_free(batch);
@@ -148,6 +161,10 @@ Java_com_nikolaspaci_app_llamallmlocal_LlamaApi_predict(
 
     // Generation loop
     for (int i = 0; i < max_new_tokens && n_cur < n_ctx; ++i) {
+        if (session->cancelRequested.load()) {
+            break;
+        }
+
         const llama_token new_token_id = common_sampler_sample(smpl, context, batch.n_tokens - 1);
 
         if (llama_vocab_is_eog(vocab, new_token_id)) {
@@ -180,10 +197,23 @@ Java_com_nikolaspaci_app_llamallmlocal_LlamaApi_predict(
     const long duration_count_seconds = duration.count() / 1000;
     const double tokens_per_second = (double)tokens_generated / (duration.count() / 1000.0);
 
-    session->n_past = n_cur;
-
     common_sampler_free(smpl);
     llama_batch_free(batch);
+
+    // If cancelled during generation, keep the partial state in context
+    if (session->cancelRequested.load()) {
+        session->n_past = n_cur;
+        std::string result_str = result_ss.str();
+        if (!result_str.empty()) {
+            session->messages.push_back(llama_chat_message{
+                .role = strdup("assistant"),
+                .content = strdup(result_str.c_str())
+            });
+        }
+        return;
+    }
+
+    session->n_past = n_cur;
 
     // 6. Add assistant's response to history
     std::string result_str = result_ss.str();

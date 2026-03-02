@@ -133,6 +133,12 @@ class LlamaEngine @Inject constructor(
         }
     }
 
+    override fun stopPredict() {
+        if (sessionPtr != 0L) {
+            LlamaApi.stopPredict(sessionPtr)
+        }
+    }
+
     override fun predict(prompt: String, parameters: ModelParameter): Flow<PredictionEvent> = callbackFlow {
         if (sessionPtr == 0L) {
             trySend(PredictionEvent.Error("Aucun modele charge", isRecoverable = false))

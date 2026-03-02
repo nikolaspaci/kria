@@ -77,6 +77,8 @@ class ChatViewModel @Inject constructor(
 
     private var predictionJob: Job? = null
     private var currentMessages: List<ChatMessage> = emptyList()
+    private var accumulatedResponse = StringBuilder()
+    private var accumulatedTokenCount = 0
     private val _modelPath = MutableStateFlow<String?>(null)
     val currentModelPath: StateFlow<String?> = _modelPath.asStateFlow()
 
@@ -169,11 +171,12 @@ class ChatViewModel @Inject constructor(
     }
 
     private fun startPrediction(prompt: String) {
+        engine.stopPredict()
         predictionJob?.cancel()
 
         predictionJob = viewModelScope.launch {
-            val accumulatedResponse = StringBuilder()
-            var tokenCount = 0
+            accumulatedResponse.clear()
+            accumulatedTokenCount = 0
 
             _uiState.value = ChatUiState.Generating(
                 messages = currentMessages,
@@ -194,12 +197,12 @@ class ChatViewModel @Inject constructor(
                     when (event) {
                         is PredictionEvent.Token -> {
                             accumulatedResponse.append(event.value)
-                            tokenCount++
+                            accumulatedTokenCount++
 
                             _uiState.value = ChatUiState.Generating(
                                 messages = currentMessages,
                                 currentResponse = accumulatedResponse.toString(),
-                                tokensGenerated = tokenCount,
+                                tokensGenerated = accumulatedTokenCount,
                                 modelName = getModelName()
                             )
                         }
@@ -217,7 +220,7 @@ class ChatViewModel @Inject constructor(
                                 stats = Stats(
                                     tokensPerSecond = event.tokensPerSecond,
                                     durationInSeconds = event.durationInSeconds,
-                                    totalTokens = tokenCount
+                                    totalTokens = accumulatedTokenCount
                                 ),
                                 modelName = getModelName()
                             )
@@ -238,8 +241,21 @@ class ChatViewModel @Inject constructor(
     }
 
     fun cancelPrediction() {
+        engine.stopPredict()
         predictionJob?.cancel()
         predictionJob = null
+
+        val partialResponse = accumulatedResponse.toString()
+        if (partialResponse.isNotEmpty()) {
+            viewModelScope.launch {
+                val botMessage = ChatMessage(
+                    conversationId = conversationId,
+                    sender = Sender.BOT,
+                    message = partialResponse
+                )
+                chatRepository.addMessageToConversation(botMessage)
+            }
+        }
 
         _uiState.value = ChatUiState.Ready(
             messages = currentMessages,

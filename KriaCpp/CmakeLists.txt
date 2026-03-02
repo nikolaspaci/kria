@@ -15,6 +15,7 @@ set(SOURCE_FILES_LIST
     ${PROJECT_SOURCE_DIR}/src/JNIMethods/FreeJni.cpp
     ${PROJECT_SOURCE_DIR}/src/JNIMethods/RestoreHistoryJni.cpp
     ${PROJECT_SOURCE_DIR}/src/JNIMethods/HardwareInfoJni.cpp
+    ${PROJECT_SOURCE_DIR}/src/JNIMethods/StopPredictJni.cpp
 )
 
 if(ANDROID)
